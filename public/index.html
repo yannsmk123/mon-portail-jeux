@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="Un petit univers de jeux HTML à partager entre amis, avec MARVEL FUSION en ligne.">
+  <meta name="theme-color" content="#0a1020">
+  <title>MY GAME ARCADE — Portail de jeux</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/portal.js" defer></script>
+</head>
+<body>
+  <div class="lights" aria-hidden="true"></div>
+  <div class="site">
+    <header class="site-header">
+      <a class="identity" href="/" aria-label="Retour à l'accueil">
+        <span class="identity-mark">✦</span><span class="identity-words"><span>MY <b>GAME</b> ARCADE</span><small>LE PORTAIL DES JEUX MAISON</small></span>
+      </a>
+      <div class="header-actions"><span class="online-chip"><span class="dot"></span> Portail en ligne</span><button type="button" id="adminOpen" class="quiet-btn">＋ Ajouter un jeu</button></div>
+    </header>
+    <main>
+      <section class="hero" aria-labelledby="heroTitle">
+        <div class="hero-orb orb-a" aria-hidden="true"></div><div class="hero-orb orb-b" aria-hidden="true"></div>
+        <div class="hero-copy">
+          <span class="eyebrow"><span class="spark">✦</span> CRÉÉ POUR JOUER ENSEMBLE</span>
+          <h1 id="heroTitle">Des jeux faits maison.<br><em>Des parties sans frontières.</em></h1>
+          <p>Retrouve tous mes jeux au même endroit. Joue en solo, lance un défi à un ami et partage des moments, même à distance.</p>
+          <div class="hero-actions"><a href="#les-jeux" class="primary-action">Explorer les jeux <span>↗</span></a><span class="hero-mini">Gratuit · Depuis ton navigateur</span></div>
+        </div>
+        <div class="hero-art" aria-hidden="true"><div class="orbit orbit-outer"></div><div class="orbit orbit-inner"></div><span class="art-card a">⚡<small>01</small></span><span class="art-card b">✦<small>02</small></span><span class="art-card c">★<small>03</small></span><span class="art-center">PLAY</span></div>
+      </section>
+      <section class="library" id="les-jeux" aria-labelledby="gamesTitle">
+        <div class="section-top"><div><div class="mini-eyebrow">TA COLLECTION</div><h2 id="gamesTitle">La bibliothèque <span id="gameCount">· …</span></h2><p>Choisis un jeu et entre dans la partie.</p></div><div class="filters"><label class="search-wrap"><span aria-hidden="true">⌕</span><input type="search" id="search" placeholder="Rechercher un jeu…" aria-label="Rechercher un jeu"></label></div></div>
+        <div class="game-grid" id="gameGrid" aria-live="polite"><div class="loading">Chargement des jeux…</div></div>
+      </section>
+      <section class="howto" aria-label="Comment jouer en ligne"><div class="howto-icon">☁</div><div><h2>Un ami à l'autre bout de la ville ?</h2><p>Ouvrez tous les deux ce portail, choisissez MARVEL FUSION, puis partagez le code de salle du mode 2 joueurs. Aucun câble ni réseau Wi-Fi commun nécessaire.</p></div><a href="/games/marvel-fusion/" class="text-action">Jouer à MARVEL FUSION ↗</a></section>
+    </main>
+    <footer><span>✦ MY GAME ARCADE</span><span>Des jeux à partager, pas à télécharger.</span><span>Fait pour jouer entre amis.</span></footer>
+  </div>
+  <dialog id="adminModal" aria-labelledby="adminTitle" class="admin-dialog">
+    <form method="dialog"><button class="close-dialog" aria-label="Fermer">✕</button></form>
+    <div class="admin-label">ESPACE CRÉATEUR</div><h2 id="adminTitle">Ajouter un jeu</h2>
+    <p class="admin-explain">Choisis un fichier <b>HTML</b> ou un <b>ZIP</b> contenant <code>index.html</code> et ses images, sons ou scripts. Il sera proposé à tes amis depuis ce portail.</p>
+    <div id="adminConfigured" hidden>
+      <form id="uploadForm">
+        <label class="field"><span>Nom du jeu</span><input id="uploadName" maxlength="80" required placeholder="Ex. Course Galactique" autocomplete="off"></label>
+        <label class="field"><span>Mot de passe administrateur</span><input id="uploadPassword" type="password" required placeholder="Ton mot de passe privé" autocomplete="off"></label>
+        <label class="file-drop" id="dropZone" for="uploadFile"><span class="drop-icon">⤒</span><strong id="fileLabel">Choisir ou glisser un fichier HTML / ZIP</strong><small>Jusqu'à 20 Mo · Un ZIP peut contenir tous les fichiers du jeu</small><input id="uploadFile" type="file" accept=".zip,.html,.htm" required></label>
+        <button class="primary-action upload-action" id="sendUpload" type="submit">Publier le jeu <span>↗</span></button>
+      </form>
+      <p class="upload-notice" id="uploadStatus" role="status" aria-live="polite"></p>
+      <p class="admin-tip">Après l'ajout, l'hébergement republie automatiquement le portail. Une partie en cours peut être interrompue pendant ce redéploiement : ajoute tes jeux entre deux parties.</p>
+    </div>
+    <div id="adminManual" hidden><div class="manual-card"><strong>Ajout sans code, depuis GitHub</strong><p>Pour ajouter un jeu, ouvre le dossier <code>uploads</code> de ton dépôt GitHub, clique sur <b>Add file → Upload files</b>, glisse le ZIP ou HTML, puis valide. Render actualisera automatiquement le site.</p><a id="githubUploadLink" href="https://github.com" target="_blank" rel="noopener noreferrer" class="primary-action">Ouvrir GitHub <span>↗</span></a></div><p class="admin-tip">Pour ajouter directement depuis cette fenêtre, configure une fois <code>ADMIN_PASSWORD</code>, <code>GITHUB_REPOSITORY</code> et <code>GITHUB_TOKEN</code> dans Render. Voir le guide fourni.</p></div>
+  </dialog>
+</body>
+</html>

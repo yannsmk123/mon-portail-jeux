@@ -1,0 +1,11 @@
+{
+  "marvel-fusion": {
+    "title": "MARVEL FUSION",
+    "description": "Construis tes combinaisons, déclenche les pouvoirs des héros et défie un ami, même depuis deux maisons différentes.",
+    "category": "Cartes & stratégie",
+    "icon": "⚡",
+    "accent": "#f96c85",
+    "multiplayer": true,
+    "featured": true
+  }
+}

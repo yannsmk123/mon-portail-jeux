@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: mon-portail-jeux
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeployTrigger: commit
+    healthCheckPath: /health

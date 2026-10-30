@@ -1,0 +1,46 @@
+══════════════════════════════════════════════════════════════
+  🎮 MY GAME ARCADE — TON PORTAIL DE JEUX EN LIGNE
+  MARVEL FUSION INCLUS · HÉBERGEMENT GRATUIT · AUCUN CODE À ÉCRIRE
+══════════════════════════════════════════════════════════════
+
+CE QUI EST DÉJÀ PRÊT :
+ ✓ Page d'accueil avec catalogue de jeux, recherche et interface mobile.
+ ✓ MARVEL FUSION (solo + mode 2 joueurs) intégré au portail.
+ ✓ Serveur de salles et règles de MARVEL FUSION conservés.
+ ✓ Joueurs dans deux maisons différentes via une adresse HTTPS commune.
+ ✓ Ajout d'un jeu HTML ou ZIP contenant index.html et ses médias.
+ ✓ Catalogue mis à jour automatiquement au prochain déploiement.
+ ✓ Option : mot de passe pour réserver le portail aux amis.
+ ✓ Option : ajout de nouveaux jeux directement depuis le site.
+
+COÛT VISÉ : 0 € / AN
+GitHub Free + Render Free + adresse gratuite *.onrender.com.
+Aucun nom de domaine payant requis.
+
+⚠️ Le site n'est PAS encore publié sur Internet : tu dois connecter
+une fois tes propres comptes GitHub et Render. Suis le guide :
+
+    GUIDE_INSTALLATION_SANS_CODER.md
+
+Ensuite, partage simplement l'adresse *.onrender.com à ton ami.
+Les deux joueurs ouvrent MARVEL FUSION et rejoignent la même salle.
+
+LIMITES À CONNAÎTRE :
+- Render Free peut s'endormir après 15 minutes sans activité.
+  Le premier chargement suivant peut prendre environ une minute.
+- Les salles et parties actives ne survivent pas à un redémarrage.
+- Publier un nouveau jeu via GitHub provoque un redéploiement :
+  n'ajoute pas de jeu pendant une partie en cours.
+- Les autres jeux HTML autonomes sont pris en charge directement.
+  Un futur jeu demandant un serveur multijoueur spécifique devra être adapté.
+- Pas de frais automatiques attendus tant que tu choisis les offres Free,
+  mais respecte leurs limites d'usage et vérifie les tarifs si elles évoluent.
+
+POUR VOIR LE PORTAIL SUR TON PC AVANT LA PUBLICATION :
+Lance LANCER_PORTAIL_WINDOWS.bat (Node.js 20+ doit être installé).
+Dans ton navigateur, ouvre http://localhost:3000/.
+
+MARVEL FUSION : http://localhost:3000/games/marvel-fusion/
+
+Ce portail est fourni avec son code prêt à l'emploi. Tu n'as pas
+besoin de modifier son code pour y ajouter tes nouveaux jeux.
