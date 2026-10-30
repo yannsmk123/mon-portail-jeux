@@ -28,32 +28,60 @@ function discoverGames(){
  }
 }
 discoverGames();
-// Pack commun : ajouté au dépôt GitHub dans uploads/ et conservé à chaque déploiement.
-// Aucune donnée privée de partie ni aucun jeton d'administration ne sont exposés.
-const mediaPackName='marvel-fusion-medias.json';
-const workshopPackName='marvel-fusion-mes-cartes.json';
+// MARVEL FUSION : pack du site dans uploads/marvel-medias/.
+// 1 JSON direct possible; les gros packs peuvent être découpés en
+// pack-part-01.json, pack-part-02.json, etc. Chaque fichier est publié via /games/.
+// Le navigateur importe automatiquement ces parties dans les deux modes.
 const gameMarvel=catalog.get('marvel-fusion');
-let hostedMediaInfo={available:false,kind:null,bytes:0,sha256:null,error:null};
-if(gameMarvel){
- for(const filename of [mediaPackName,workshopPackName]){
-  const filepath=path.join(UPLOADS,filename);
-  if(!fs.existsSync(filepath))continue;
-  try{
-   const file=fs.readFileSync(filepath);
-   if(file.length>24*1024*1024)throw Error('Pack supérieur à 24 Mo, à découper ou à optimiser.');
-   const parsed=JSON.parse(file.toString('utf8'));
-   const isFull=filename===mediaPackName;
-   if(isFull && (parsed.format!=='marvel-fusion-media-pack-v1'||parsed.version!==1||!Array.isArray(parsed.assets)))throw Error('Ce JSON ne vient pas de « Exporter pack médias ».');
-   if(!isFull && !(Array.isArray(parsed.assets)&&parsed.links&&typeof parsed.links==='object'))throw Error('Ce JSON ne vient pas de « Sauvegarder l’atelier ».');
-   if(isFull && parsed.assets.length>600)throw Error('Trop de médias dans le pack.');
-   const normalized=isFull?file:Buffer.from(JSON.stringify(parsed));
-   const digest=crypto.createHash('sha256').update(normalized).digest('hex');
-   if(!hostedMediaInfo.available||isFull){
-    gameMarvel.files.set('medias-par-defaut.json',normalized);
-    hostedMediaInfo={available:true,kind:isFull?'medias':'cartes',bytes:normalized.length,sha256:digest,error:null};
-   }
-  }catch(e){hostedMediaInfo.error=filename+': '+e.message;console.error('Pack médias invalide:',hostedMediaInfo.error)}
+function hostedMediaFiles(){
+ const folder=path.join(UPLOADS,'marvel-medias');
+ if(fs.existsSync(folder)){
+  const all=fs.readdirSync(folder).filter(name=>/\.json$/i.test(name)).sort();
+  const parts=all.filter(name=>/^pack-part-\d+\.json$/i.test(name));
+  if(parts.length){
+   const indices=parts.map(name=>Number(name.match(/\d+/)[0]));
+   if(indices[0]!==1||indices.some((num,i)=>num!==i+1))throw Error('Les fichiers pack-part doivent être numérotés sans trou depuis 01.');
+   return parts.map(filename=>({filename,filepath:path.join(folder,filename),kind:'medias'}));
+  }
+  // Tu peux aussi déposer directement le JSON exporté, quel que soit son nom.
+  const singles=all.filter(name=>!/^pack-part-/i.test(name));
+  if(singles.length){
+   const filename=singles.find(x=>/^pack\.json$/i.test(x))||singles[0];
+   if(singles.length>1)console.warn('Plusieurs JSON dans marvel-medias : seul '+filename+' est chargé.');
+   return [{filename,filepath:path.join(folder,filename),kind:'medias'}];
+  }
  }
+ // Rétrocompatibilité avec le premier portail médias : uploads/.
+ for(const [filename,kind] of [['marvel-fusion-medias.json','medias'],['marvel-fusion-mes-cartes.json','cartes']]){
+  const filepath=path.join(UPLOADS,filename);
+  if(fs.existsSync(filepath))return [{filename,filepath,kind}];
+ }
+ return [];
+}
+let hostedMediaInfo={available:false,kind:null,sha256:null,parts:[],error:null};
+if(gameMarvel){
+ try{
+  const sourceFiles=hostedMediaFiles();
+  if(sourceFiles.length){
+   const staged=[];const hash=crypto.createHash('sha256');let grandTotal=0;
+   for(const {filename,filepath,kind} of sourceFiles){
+    const bytes=fs.readFileSync(filepath);grandTotal+=bytes.length;
+    if(grandTotal>120*1024*1024)throw Error('Pack de médias trop volumineux (120 Mio maximum).');
+    const parsed=JSON.parse(bytes.toString('utf8'));
+    if(kind==='medias'){
+     if(parsed.format!=='marvel-fusion-media-pack-v1'||parsed.version!==1||!Array.isArray(parsed.assets))throw Error(filename+' : format de pack médias invalide.');
+     if(parsed.assets.length>600)throw Error(filename+' : trop de médias.');
+    }else if(!(Array.isArray(parsed.assets)&&parsed.links&&typeof parsed.links==='object')){
+     throw Error(filename+' : atelier de cartes invalide.');
+    }
+    const uri='medias/'+filename;
+    staged.push({uri,bytes});hash.update(filename).update(bytes);
+   }
+   for(const {uri,bytes} of staged)gameMarvel.files.set(uri,bytes);
+   hostedMediaInfo={available:true,kind:sourceFiles[0].kind,sha256:hash.digest('hex'),parts:staged.map(s=>s.uri),error:null};
+   console.log('Médias MARVEL FUSION : '+staged.length+' fichier(s), '+(grandTotal/1048576).toFixed(1)+' Mio, installation automatique.');
+  }else console.log('Médias MARVEL FUSION : aucun pack publié dans uploads/marvel-medias/.');
+ }catch(err){hostedMediaInfo.error=err.message;console.error('Médias MARVEL FUSION :',err.message)}
  gameMarvel.files.set('medias-par-defaut-version.json',Buffer.from(JSON.stringify(hostedMediaInfo)));
 }
 const mime={'.html':'text/html; charset=utf-8','.htm':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.gif':'image/gif','.webp':'image/webp','.ico':'image/x-icon','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.mp4':'video/mp4','.webm':'video/webm','.json':'application/json; charset=utf-8','.wasm':'application/wasm','.woff2':'font/woff2','.woff':'font/woff','.ttf':'font/ttf','.txt':'text/plain; charset=utf-8','.pdf':'application/pdf'};
@@ -131,7 +159,7 @@ const server=http.createServer(async (req,res)=>{
      if(!content)return respond(res,404,'Fichier introuvable : '+filepath,'text/plain; charset=utf-8');
      if(/(^|\/)(server\.js|package(-lock)?\.json|LANCER_WINDOWS\.bat)$/i.test(filepath)||filepath.startsWith('tests/'))return respond(res,404,'Fichier non publié.','text/plain; charset=utf-8');
      const type=mime[path.extname(filepath).toLowerCase()]||'application/octet-stream';
-     return respond(res,200,content,type,{'Cache-Control':filepath==='medias-par-defaut-version.json'?'no-cache':'public, max-age=300','Cross-Origin-Resource-Policy':'same-origin'});
+     return respond(res,200,content,type,{'Cache-Control':(filepath==='medias-par-defaut-version.json'||filepath.startsWith('medias/'))?'no-store':'public, max-age=300','Cross-Origin-Resource-Policy':'same-origin'});
    }
    // API de MARVEL FUSION conservée, même logique de jeu en local et à distance.
    if(pn.startsWith('/api/') || ['/solo','/solo.html','/jeu','/play','/diagnostic','/favicon.ico'].includes(pn)){
