@@ -28,6 +28,34 @@ function discoverGames(){
  }
 }
 discoverGames();
+// Pack commun : ajouté au dépôt GitHub dans uploads/ et conservé à chaque déploiement.
+// Aucune donnée privée de partie ni aucun jeton d'administration ne sont exposés.
+const mediaPackName='marvel-fusion-medias.json';
+const workshopPackName='marvel-fusion-mes-cartes.json';
+const gameMarvel=catalog.get('marvel-fusion');
+let hostedMediaInfo={available:false,kind:null,bytes:0,sha256:null,error:null};
+if(gameMarvel){
+ for(const filename of [mediaPackName,workshopPackName]){
+  const filepath=path.join(UPLOADS,filename);
+  if(!fs.existsSync(filepath))continue;
+  try{
+   const file=fs.readFileSync(filepath);
+   if(file.length>24*1024*1024)throw Error('Pack supérieur à 24 Mo, à découper ou à optimiser.');
+   const parsed=JSON.parse(file.toString('utf8'));
+   const isFull=filename===mediaPackName;
+   if(isFull && (parsed.format!=='marvel-fusion-media-pack-v1'||parsed.version!==1||!Array.isArray(parsed.assets)))throw Error('Ce JSON ne vient pas de « Exporter pack médias ».');
+   if(!isFull && !(Array.isArray(parsed.assets)&&parsed.links&&typeof parsed.links==='object'))throw Error('Ce JSON ne vient pas de « Sauvegarder l’atelier ».');
+   if(isFull && parsed.assets.length>600)throw Error('Trop de médias dans le pack.');
+   const normalized=isFull?file:Buffer.from(JSON.stringify(parsed));
+   const digest=crypto.createHash('sha256').update(normalized).digest('hex');
+   if(!hostedMediaInfo.available||isFull){
+    gameMarvel.files.set('medias-par-defaut.json',normalized);
+    hostedMediaInfo={available:true,kind:isFull?'medias':'cartes',bytes:normalized.length,sha256:digest,error:null};
+   }
+  }catch(e){hostedMediaInfo.error=filename+': '+e.message;console.error('Pack médias invalide:',hostedMediaInfo.error)}
+ }
+ gameMarvel.files.set('medias-par-defaut-version.json',Buffer.from(JSON.stringify(hostedMediaInfo)));
+}
 const mime={'.html':'text/html; charset=utf-8','.htm':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.gif':'image/gif','.webp':'image/webp','.ico':'image/x-icon','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.mp4':'video/mp4','.webm':'video/webm','.json':'application/json; charset=utf-8','.wasm':'application/wasm','.woff2':'font/woff2','.woff':'font/woff','.ttf':'font/ttf','.txt':'text/plain; charset=utf-8','.pdf':'application/pdf'};
 function respond(res,code,data,type='text/html; charset=utf-8',headers={}){res.writeHead(code,{'Content-Type':type,'X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin',...headers});res.end(data)}
 function json(res,code,obj){respond(res,code,JSON.stringify(obj),'application/json; charset=utf-8',{'Cache-Control':'no-store'})}
@@ -103,7 +131,7 @@ const server=http.createServer(async (req,res)=>{
      if(!content)return respond(res,404,'Fichier introuvable : '+filepath,'text/plain; charset=utf-8');
      if(/(^|\/)(server\.js|package(-lock)?\.json|LANCER_WINDOWS\.bat)$/i.test(filepath)||filepath.startsWith('tests/'))return respond(res,404,'Fichier non publié.','text/plain; charset=utf-8');
      const type=mime[path.extname(filepath).toLowerCase()]||'application/octet-stream';
-     return respond(res,200,content,type,{'Cache-Control':'public, max-age=300','Cross-Origin-Resource-Policy':'same-origin'});
+     return respond(res,200,content,type,{'Cache-Control':filepath==='medias-par-defaut-version.json'?'no-cache':'public, max-age=300','Cross-Origin-Resource-Policy':'same-origin'});
    }
    // API de MARVEL FUSION conservée, même logique de jeu en local et à distance.
    if(pn.startsWith('/api/') || ['/solo','/solo.html','/jeu','/play','/diagnostic','/favicon.ico'].includes(pn)){
