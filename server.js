@@ -159,7 +159,7 @@ const server=http.createServer(async (req,res)=>{
      if(!content)return respond(res,404,'Fichier introuvable : '+filepath,'text/plain; charset=utf-8');
      if(/(^|\/)(server\.js|package(-lock)?\.json|LANCER_WINDOWS\.bat)$/i.test(filepath)||filepath.startsWith('tests/'))return respond(res,404,'Fichier non publié.','text/plain; charset=utf-8');
      const type=mime[path.extname(filepath).toLowerCase()]||'application/octet-stream';
-     return respond(res,200,content,type,{'Cache-Control':(filepath==='medias-par-defaut-version.json'||filepath.startsWith('medias/'))?'no-store':'public, max-age=300','Cross-Origin-Resource-Policy':'same-origin'});
+     return respond(res,200,content,type,{'Cache-Control':(filepath==='index.html'||filepath==='version.txt'||filepath==='medias-par-defaut-version.json'||filepath.startsWith('medias/'))?'no-store':'public, max-age=300','Cross-Origin-Resource-Policy':'same-origin'});
    }
    // API de MARVEL FUSION conservée, même logique de jeu en local et à distance.
    if(pn.startsWith('/api/') || ['/solo','/solo.html','/jeu','/play','/diagnostic','/favicon.ico'].includes(pn)){
