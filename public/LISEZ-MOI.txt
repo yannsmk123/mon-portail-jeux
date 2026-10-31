@@ -1,0 +1,44 @@
+MY GAME ARCADE — CORRECTION DU LIEN MARVEL SPLENDOR
+==================================================
+
+CAUSE IDENTIFIÉE
+Le portail Render affiche les jeux récupérés depuis /api/portal/games.
+Dans l'ancien portal.js, le bouton « Jouer » utilisait toujours
+/games/<identifiant>/ sur Render, y compris pour Marvel Splendor.
+Ce chemin pouvait ouvrir une ancienne version avec des cartes supprimées.
+
+CORRECTION
+La fiche Marvel Splendor ouvre désormais :
+https://yannsmk123.github.io/mon-portail-jeux/uploads/marvel-splendor/index.html
+
+Tous les autres jeux gardent exactement leur lien /games/<identifiant>/.
+Un paramètre de version sur le script dans index.html facilite l'actualisation
+après la mise en ligne. styles.css est strictement inchangé.
+
+INSTALLATION — DEPÔT mon-portail-jeux, RACINE (pas dans uploads/marvel-splendor)
+1. Dans GitHub Desktop : Repository > Show in Explorer.
+2. Dans le DOSSIER PRINCIPAL du dépôt, remplace :
+   - index.html
+   - portal.js
+   - styles.css (facultatif, son contenu n'a pas changé)
+3. N'efface PAS le dossier uploads/marvel-splendor/. Il contient déjà le bon jeu.
+4. Dans GitHub Desktop : Commit to main, puis Push origin.
+5. Sur Render, vérifie que le portail est redéployé depuis le dernier commit.
+6. Ouvre ton portail Render et recharge avec Ctrl + F5.
+7. Clique sur « Jouer » depuis la fiche Marvel Splendor. Vérifie que la barre
+   d'adresse contient yannsmk123.github.io/mon-portail-jeux/uploads/marvel-splendor/.
+8. Si une partie enregistrée contient les anciennes cartes, restaure les cartes
+   depuis le JSON dans le jeu, puis lance une NOUVELLE partie.
+
+NE PAS FAIRE
+- Ne remplace pas le index.html présent dans uploads/marvel-splendor/ par
+  le index.html de ce pack : celui-ci est la PAGE DU PORTAIL, pas le jeu.
+- Ne téléverse pas le ZIP tel quel : décompresse-le avant copie.
+- Ne modifie pas le JSON : cette correction ne concerne que le lien de lancement.
+
+TESTS
+- portal.js vérifié syntaxiquement par Node.js.
+- Trois scénarios de liens testés : Marvel Splendor, autre nom de la même fiche,
+  et jeux sans rapport qui gardent /games/<id>/.
+- HTML d'origine conservé, hormis le paramètre de version du script.
+- CSS recopié sans aucune modification.

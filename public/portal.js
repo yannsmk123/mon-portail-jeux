@@ -1,6 +1,15 @@
 'use strict';
 const byId=(id)=>document.getElementById(id);
 let storedGames=[],repo='',canUpload=false,portalConfig={};
+
+// Fix Marvel Splendor : ouvrir l'unique version GitHub Pages, où son JSON est publié.
+// Toutes les autres fiches continuent d'utiliser /games/<id>/ sur Render.
+const MARVEL_SPLENDOR_PAGE = 'https://yannsmk123.github.io/mon-portail-jeux/uploads/marvel-splendor/index.html';
+function portalGamePlayUrl(game){
+ const label = [game.id, game.title].map(value=>String(value||'')).join(' ').toLowerCase();
+ if(label.includes('marvel') && label.includes('splendor')) return MARVEL_SPLENDOR_PAGE;
+ return `/games/${encodeURIComponent(game.id)}/`;
+}
 function node(tag,attrs={},contents=''){
  const el=document.createElement(tag);
  for(const [key,value] of Object.entries(attrs)){
@@ -26,7 +35,7 @@ function showGames(query=''){
   body.append(node('div',{class:'game-category'},g.category));body.append(node('h3',{},g.title));body.append(node('p',{class:'game-description'},g.description));
   const bottom=node('div',{class:'card-bottom'});
   bottom.append(node('span',{class:'card-meta'},g.multiplayer?'1–2 joueurs · navigateur':'Jouer dans le navigateur'));
-  const a=node('a',{class:'play-link',href:`/games/${encodeURIComponent(g.id)}/`},'Jouer  ↗');
+  const a=node('a',{class:'play-link',href:portalGamePlayUrl(g)},'Jouer  ↗');
   bottom.append(a);body.append(bottom);card.append(body);grid.append(card);
  }
 }
@@ -90,7 +99,7 @@ async function watchPublished(slug){
     await loadPortal();
     up('uploadResultTitle').textContent='✅ Ton jeu est maintenant en ligne !';
     up('uploadResultInfo').textContent='Il apparaît dans la bibliothèque et tes visiteurs peuvent y jouer.';
-    up('uploadResultLink').href='/games/'+encodeURIComponent(slug)+'/';up('uploadResultLink').hidden=false;
+    up('uploadResultLink').href=portalGamePlayUrl({id:slug,title:slug});up('uploadResultLink').hidden=false;
    }}
   }catch(_){} // Render peut temporairement redémarrer après la publication GitHub.
   if(checks>=36&&uploadPoll){clearInterval(uploadPoll);uploadPoll=null;up('uploadResultInfo').textContent='Le jeu a bien été envoyé sur GitHub. Si Render n’a pas encore terminé, recharge le portail après son redéploiement.'}
