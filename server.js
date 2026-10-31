@@ -63,14 +63,14 @@ if(gameMarvel){
  try{
   const sourceFiles=hostedMediaFiles();
   if(sourceFiles.length){
-   const staged=[];const hash=crypto.createHash('sha256');let grandTotal=0;
+   const staged=[];const hash=crypto.createHash('sha256');let grandTotal=0;const counts={soloAudio:0,soloPower:0,soloOutcome:0,lanMedia:0,workshopAssets:0};
    for(const {filename,filepath,kind} of sourceFiles){
     const bytes=fs.readFileSync(filepath);grandTotal+=bytes.length;
     if(grandTotal>120*1024*1024)throw Error('Pack de médias trop volumineux (120 Mio maximum).');
     const parsed=JSON.parse(bytes.toString('utf8'));
     if(kind==='medias'){
      if(parsed.format!=='marvel-fusion-media-pack-v1'||parsed.version!==1||!Array.isArray(parsed.assets))throw Error(filename+' : format de pack médias invalide.');
-     if(parsed.assets.length>600)throw Error(filename+' : trop de médias.');
+     if(parsed.assets.length>600)throw Error(filename+' : trop de médias.');for(const entry of parsed.assets)if(Object.prototype.hasOwnProperty.call(counts,entry.scope))counts[entry.scope]++;if(Array.isArray(parsed.workshop?.assets))counts.workshopAssets=Math.max(counts.workshopAssets,parsed.workshop.assets.length);
     }else if(!(Array.isArray(parsed.assets)&&parsed.links&&typeof parsed.links==='object')){
      throw Error(filename+' : atelier de cartes invalide.');
     }
@@ -78,7 +78,7 @@ if(gameMarvel){
     staged.push({uri,bytes});hash.update(filename).update(bytes);
    }
    for(const {uri,bytes} of staged)gameMarvel.files.set(uri,bytes);
-   hostedMediaInfo={available:true,kind:sourceFiles[0].kind,sha256:hash.digest('hex'),parts:staged.map(s=>s.uri),error:null};
+   hostedMediaInfo={available:true,kind:sourceFiles[0].kind,sha256:hash.digest('hex'),parts:staged.map(s=>s.uri),counts,error:null};
    console.log('Médias MARVEL FUSION : '+staged.length+' fichier(s), '+(grandTotal/1048576).toFixed(1)+' Mio, installation automatique.');
   }else console.log('Médias MARVEL FUSION : aucun pack publié dans uploads/marvel-medias/.');
  }catch(err){hostedMediaInfo.error=err.message;console.error('Médias MARVEL FUSION :',err.message)}
