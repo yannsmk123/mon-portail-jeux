@@ -1,0 +1,9 @@
+OPTION À AJOUTER DANS TON PORTAIL (SEULEMENT APRES AVOIR OBTENU TON URL RENDER)
+
+Nom du jeu : Lost Cities Duel — 2 joueurs en ligne
+URL : https://TON-VRAI-NOM.onrender.com/
+
+Si ton portail utilise des liens HTML, voici un exemple (ne remplace pas les autres jeux) :
+<a href="https://TON-VRAI-NOM.onrender.com/" target="_blank" rel="noopener noreferrer">🎴 Lost Cities Duel — 2 joueurs en ligne</a>
+
+IMPORTANT : sans les fichiers de ton portail, je ne peux pas indiquer le fichier précis ou le menu à modifier. Ne remplace pas son index.html par celui du jeu.
