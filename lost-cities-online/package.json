@@ -1,0 +1,11 @@
+{
+  "name": "lost-cities-duel-online",
+  "private": true,
+  "version": "1.7.0",
+  "description": "Lost Cities Duel Fusion — solo préservé + duels privés en ligne",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/smoke.test.js"
+  },
+  "engines": {"node": ">=20"}
+}
