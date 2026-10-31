@@ -1,14 +1,10 @@
 'use strict';
 const byId=(id)=>document.getElementById(id);
 let storedGames=[],repo='',canUpload=false,portalConfig={};
-
-// Fix Marvel Splendor : ouvrir l'unique version GitHub Pages, où son JSON est publié.
-// Toutes les autres fiches continuent d'utiliser /games/<id>/ sur Render.
-const MARVEL_SPLENDOR_PAGE = 'https://yannsmk123.github.io/mon-portail-jeux/uploads/marvel-splendor/index.html';
+// Marvel Splendor est lancé depuis Render, comme les autres jeux du portail.
 function portalGamePlayUrl(game){
- const label = [game.id, game.title].map(value=>String(value||'')).join(' ').toLowerCase();
- if(label.includes('marvel') && label.includes('splendor')) return MARVEL_SPLENDOR_PAGE;
- return `/games/${encodeURIComponent(game.id)}/`;
+ const id=String(game.id||'');
+ return (id==='splendor'||id==='marvel-splendor')?'/games/splendor/':`/games/${encodeURIComponent(id)}/`;
 }
 function node(tag,attrs={},contents=''){
  const el=document.createElement(tag);
@@ -99,7 +95,7 @@ async function watchPublished(slug){
     await loadPortal();
     up('uploadResultTitle').textContent='✅ Ton jeu est maintenant en ligne !';
     up('uploadResultInfo').textContent='Il apparaît dans la bibliothèque et tes visiteurs peuvent y jouer.';
-    up('uploadResultLink').href=portalGamePlayUrl({id:slug,title:slug});up('uploadResultLink').hidden=false;
+    up('uploadResultLink').href=portalGamePlayUrl({id:slug});up('uploadResultLink').hidden=false;
    }}
   }catch(_){} // Render peut temporairement redémarrer après la publication GitHub.
   if(checks>=36&&uploadPoll){clearInterval(uploadPoll);uploadPoll=null;up('uploadResultInfo').textContent='Le jeu a bien été envoyé sur GitHub. Si Render n’a pas encore terminé, recharge le portail après son redéploiement.'}
@@ -182,7 +178,7 @@ function loadEditorGame(){
  edit('editorDescription').value=g.description||'';
  const icon=edit('editorIcon');if(!Array.from(icon.options).some(o=>o.value===g.icon))icon.add(new Option(g.icon||'🎮',g.icon||'🎮'));
  icon.value=g.icon||'🎮';edit('editorAccent').value=/^#[0-9a-f]{6}$/i.test(g.accent)?g.accent:'#64dbe3';
- edit('editorGitHubPath').textContent='uploads/'+g.id+'/';edit('editorCoverPicker').hidden=true;
+ edit('editorGitHubPath').textContent='uploads/'+(g.storageId||g.id)+'/';edit('editorCoverPicker').hidden=true;
  previewEditor();
 }
 function editorCoverAction(){return document.querySelector('input[name="editorCoverAction"]:checked')?.value||'keep'}

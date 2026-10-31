@@ -27,6 +27,8 @@ function listUploadedGames(){
   if(entry.isFile()&&gameFile(entry.name)){
    candidates.push({filename:entry.name,relative:entry.name,id:asSlug(entry.name.replace(/\.(zip|html?)$/i,''))});
   }else if(entry.isDirectory()){
+   // Marvel Splendor est servi directement par Render, sans empaqueter ses médias en mémoire.
+   if(entry.name==='marvel-splendor')continue;
    // Ne parcourir qu'un niveau : ignore par ex. les packs de médias Marvel et les ressources imbriquées.
    for(const inside of fs.readdirSync(path.join(UPLOADS,entry.name),{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name))){
     if(inside.isFile()&&gameFile(inside.name)){
@@ -59,6 +61,25 @@ function discoverGames(){
  applyPresentationOverlays();
 }
 discoverGames();
+// MARVEL SPLENDOR : version du dossier GitHub uploads/marvel-splendor/.
+// Le HTML est petit, mais le JSON découpé en cinq fichiers est trop volumineux
+// pour le chargeur ZIP (20 Mo) : les médias seront diffusés depuis le disque.
+const SPLENDOR_FOLDER=path.join(UPLOADS,'marvel-splendor');
+const splendorIndex=path.join(SPLENDOR_FOLDER,'index.html');
+if(fs.existsSync(splendorIndex)){
+ const data=fs.readFileSync(splendorIndex);
+ const meta=metadata(new Map([['index.html',data]]),'Marvel Splendor');
+ const cfg=presets.splendor||presets['marvel-splendor']||{};
+ catalog.set('splendor',{
+  id:'splendor',storageId:'marvel-splendor',
+  files:new Map([['index.html',data]]),
+  title:cfg.title||'Marvel Splendor',
+  description:cfg.description||meta.description,
+  category:cfg.category||'Cartes & stratégie',
+  icon:cfg.icon||'🃏',accent:cfg.accent||'#d3ae6e',
+  cover:null,multiplayer:!!cfg.multiplayer,featured:!!cfg.featured
+ });
+}else errors.push('uploads/marvel-splendor/index.html absent : Marvel Splendor non publié sur Render.');
 // Jeu embarqué dans un dossier dédié, ajouté au catalogue sans modifier les ZIP existants.
 // Une copie du HTML est servie par /games/lost-cities-duel/ ; son API multijoueur
 // passe uniquement par /api/lost-cities/* et ne touche jamais aux routes MARVEL.
@@ -178,7 +199,7 @@ function coverImage(imageBase64,coverName){
 }
 function applyPresentationOverlays(){
  for(const game of catalog.values()){
-  const base=path.join(UPLOADS,game.id);
+  const base=path.join(UPLOADS,game.storageId||game.id);
   const metaFile=path.join(base,'_presentation_portail.json');
   if(!fs.existsSync(metaFile))continue;
   try{
@@ -267,6 +288,37 @@ function gameUpload({name,description,category,icon,filename,base64,coverBase64,
 
 const publicRoot=path.join(ROOT,'public');
 const handlers=marvelServer.listeners('request');
+// Route dédiée pour Marvel Splendor. Ne charger QUE le fichier demandé :
+// les cinq parties JSON (~75 Mo en tout) ne passent jamais dans catalog.files.
+function serveSplendor(req,res,relative){
+ if(!fs.existsSync(SPLENDOR_FOLDER))return respond(res,404,'Marvel Splendor non installé.','text/plain; charset=utf-8');
+ let name;
+ try{name=decodeURIComponent(relative||'index.html')}catch(_){return respond(res,400,'Chemin invalide.','text/plain; charset=utf-8')}
+ if(!name||name.endsWith('/'))name+='index.html';
+ if(!pathSafe(name)||name.startsWith('.')||name.split('/').some(x=>!x||x.startsWith('.')||x==='..')||name.includes('\\'))
+  return respond(res,403,'Chemin interdit.','text/plain; charset=utf-8');
+ const pathname=path.resolve(SPLENDOR_FOLDER,name);
+ // Les liens symboliques ne peuvent pas permettre de sortir du dossier du jeu.
+ let real,root,stat;
+ try{
+  root=fs.realpathSync(SPLENDOR_FOLDER);
+  real=fs.realpathSync(pathname);
+  if(real!==root&&!real.startsWith(root+path.sep))return respond(res,403,'Chemin interdit.','text/plain; charset=utf-8');
+  stat=fs.statSync(real);
+ }catch(_){return respond(res,404,'Ressource introuvable : '+name,'text/plain; charset=utf-8')}
+ if(!stat.isFile())return respond(res,404,'Fichier introuvable.','text/plain; charset=utf-8');
+ const ext=path.extname(real).toLowerCase();
+ const contentType=mime[ext];
+ if(!contentType||['.js','.mjs','.html','.htm','.css','.svg','.png','.jpg','.jpeg','.gif','.webp','.ico','.mp3','.wav','.ogg','.mp4','.webm','.json','.wasm','.woff2','.woff','.ttf','.txt'].includes(ext)===false)
+  return respond(res,403,'Type de fichier non publié.','text/plain; charset=utf-8');
+ res.writeHead(200,{'Content-Type':contentType,'Content-Length':stat.size,
+  'X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin',
+  'Cross-Origin-Resource-Policy':'same-origin',
+  'Cache-Control':(ext==='.html'||ext==='.json'||name.startsWith('marvel-splendor-assets.part-'))?'no-store':'public, max-age=300'});
+ const source=fs.createReadStream(real);
+ source.on('error',e=>{console.error('Fichier Splendor :',e.message);res.destroy(e)});
+ source.pipe(res);
+}
 const server=http.createServer(async (req,res)=>{
  try{
    const url=new URL(req.url||'/','http://localhost'); const pn=url.pathname;
@@ -301,6 +353,7 @@ const server=http.createServer(async (req,res)=>{
     const id=String(payload.id||'');const game=catalog.get(id);
     if(!game||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id))return json(res,404,{error:'Jeu introuvable.'});
     const info=safePresentation(payload);
+    const folderId=game.storageId||id;
     const coverAction=payload.coverAction||'keep';
     if(!['keep','replace','remove'].includes(coverAction))throw Error('Option de couverture invalide.');
     // Toujours dans le dossier du jeu : uploads/identifiant-du-jeu/couverture-portail.ext.
@@ -310,11 +363,11 @@ const server=http.createServer(async (req,res)=>{
     if(coverAction==='replace'){
      const image=coverImage(payload.coverBase64,payload.coverName);
      cover=image.filename;
-     await githubSaveFile(`uploads/${id}/${image.filename}`,image.bytes,`Couverture du jeu ${id}`);
+     await githubSaveFile(`uploads/${folderId}/${image.filename}`,image.bytes,`Couverture du jeu ${id}`);
     }
     const meta={...info,cover};
-    const saved=await githubSaveFile(`uploads/${id}/_presentation_portail.json`,Buffer.from(JSON.stringify(meta,null,2)+'\n'),`Modifier la présentation du jeu ${id}`);
-    return json(res,200,{ok:true,path:saved.path,coverPath:coverAction==='replace'?`uploads/${id}/${cover}`:null,message:'Fiche enregistrée sur GitHub. Elle sera visible après le redéploiement de Render.'});
+    const saved=await githubSaveFile(`uploads/${folderId}/_presentation_portail.json`,Buffer.from(JSON.stringify(meta,null,2)+'\n'),`Modifier la présentation du jeu ${id}`);
+    return json(res,200,{ok:true,path:saved.path,coverPath:coverAction==='replace'?`uploads/${folderId}/${cover}`:null,message:'Fiche enregistrée sur GitHub. Elle sera visible après le redéploiement de Render.'});
    }
    if(req.method==='POST'&&pn==='/api/portal/upload'){
       if(!adminConfigured())return json(res,503,{error:'Envoi direct non configuré : utilise GitHub > uploads > Add file > Upload files.'});
@@ -333,7 +386,17 @@ const server=http.createServer(async (req,res)=>{
       return respond(res,200,fs.readFileSync(path.join(publicRoot,'index.html')),mime['.html'],{'Cache-Control':'no-cache'});
    }
    if(req.method==='GET'&&pn==='/styles.css')return respond(res,200,fs.readFileSync(path.join(publicRoot,'styles.css')),mime['.css']);
-   if(req.method==='GET'&&pn==='/portal.js')return respond(res,200,fs.readFileSync(path.join(publicRoot,'portal.js')),mime['.js']);
+   if(req.method==='GET'&&pn==='/portal.js')return respond(res,200,fs.readFileSync(path.join(publicRoot,'portal.js')),mime['.js'],{'Cache-Control':'no-cache'});
+   // Ancienne adresse Render : la garder comme alias, pour les favoris existants.
+   if(req.method==='GET'&&(pn==='/games/marvel-splendor'||pn.startsWith('/games/marvel-splendor/'))){
+    const suffix=pn.slice('/games/marvel-splendor'.length);
+    res.writeHead(302,{Location:'/games/splendor'+(suffix||'/')+url.search,'Cache-Control':'no-store'});
+    return res.end();
+   }
+   if(req.method==='GET'&&(pn==='/games/splendor'||pn.startsWith('/games/splendor/'))){
+    if(pn==='/games/splendor'){res.writeHead(302,{Location:'/games/splendor/'+url.search,'Cache-Control':'no-store'});return res.end();}
+    return serveSplendor(req,res,pn.slice('/games/splendor/'.length));
+   }
    if(req.method==='GET'&&pn.startsWith('/games/')){
      const segments=pn.slice('/games/'.length).split('/');
      const id=segments.shift(),game=catalog.get(id);
