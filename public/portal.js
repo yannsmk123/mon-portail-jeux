@@ -1,6 +1,6 @@
 'use strict';
 const byId=(id)=>document.getElementById(id);
-let storedGames=[],repo='',canUpload=false;
+let storedGames=[],repo='',canUpload=false,portalConfig={};
 function node(tag,attrs={},contents=''){
  const el=document.createElement(tag);
  for(const [key,value] of Object.entries(attrs)){
@@ -33,7 +33,8 @@ function showGames(query=''){
 async function loadPortal(){
  try{
   const res=await fetch('/api/portal/games',{cache:'no-store'});if(!res.ok)throw Error('Serveur indisponible.');
-  const data=await res.json();storedGames=data.games||[];repo=data.repository||'';canUpload=!!data.adminAvailable;
+  const data=await res.json();storedGames=data.games||[];repo=data.repository||'';canUpload=!!data.adminAvailable;portalConfig=data.settings||{};
+  applyPortalSettings();refreshEditorChoices();
   byId('gameCount').textContent='· '+storedGames.length+' jeu'+(storedGames.length>1?'x':'');
   byId('adminConfigured').hidden=!canUpload;byId('adminManual').hidden=canUpload;
   if(repo)byId('githubUploadLink').href=`https://github.com/${repo}/upload/HEAD/uploads`;
@@ -121,4 +122,98 @@ up('uploadForm').addEventListener('submit',async e=>{
  }catch(error){message(error.message,true)}
  finally{btn.disabled=false;btn.textContent='🚀 Ajouter le jeu au portail ↗'}
 });
+
+// V111 : Paramètres du portail, modifiables sur GitHub.
+function applyPortalSettings(){
+ const p=portalConfig;
+ byId('portalBrand').textContent=p.siteName||'MY GAME ARCADE';
+ byId('portalSubtitle').textContent=p.subtitle||'LE PORTAIL DES JEUX MAISON';
+ byId('portalHeroTitle').textContent=p.heroTitle||'Des jeux faits maison.';
+ byId('portalHeroHighlight').textContent=p.heroHighlight||'Des parties sans frontières.';
+ byId('portalIntro').textContent=p.intro||'Retrouve tous mes jeux au même endroit.';
+ document.title=(p.siteName||'MY GAME ARCADE')+' — Portail de jeux';
+}
+function showDialog(id){byId(id).showModal()}
+const edit=(id)=>byId(id);
+function adminNotice(id,text,bad=false){const el=edit(id);el.textContent=text;el.classList.toggle('error',bad)}
+async function postAdmin(url,body){
+ const resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+ const data=await resp.json();if(!resp.ok)throw Error(data.error||'Échec de l’enregistrement.');return data;
+}
+edit('settingsOpen').addEventListener('click',()=>{
+ for(const [id,key] of [['settingSiteName','siteName'],['settingSubtitle','subtitle'],['settingHeroTitle','heroTitle'],['settingHeroHighlight','heroHighlight'],['settingIntro','intro']])edit(id).value=portalConfig[key]||'';
+ edit('settingsDisabled').hidden=canUpload;
+ adminNotice('settingsStatus','');showDialog('settingsModal');
+});
+edit('settingsForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=edit('settingsSave');btn.disabled=true;btn.textContent='Enregistrement…';
+ const settings={siteName:edit('settingSiteName').value,subtitle:edit('settingSubtitle').value,heroTitle:edit('settingHeroTitle').value,heroHighlight:edit('settingHeroHighlight').value,intro:edit('settingIntro').value};
+ try{
+  const response=await postAdmin('/api/portal/settings/save',{password:edit('settingPassword').value,settings});
+  adminNotice('settingsStatus','✅ '+response.message);
+ }catch(err){adminNotice('settingsStatus',err.message,true)}
+ finally{btn.disabled=false;btn.textContent='💾 Enregistrer les paramètres ↗'}
+});
+let editorCoverUrl=null;
+function refreshEditorChoices(){
+ const sel=edit('editorGame'),previous=sel.value;
+ sel.replaceChildren();
+ for(const game of storedGames)sel.append(node('option',{value:game.id},game.title));
+ if(storedGames.some(g=>g.id===previous))sel.value=previous;
+ if(storedGames.length)loadEditorGame();
+}
+function currentEditedGame(){return storedGames.find(g=>g.id===edit('editorGame').value)}
+function resetEditorCoverUrl(){if(editorCoverUrl){URL.revokeObjectURL(editorCoverUrl);editorCoverUrl=null}}
+function loadEditorGame(){
+ const g=currentEditedGame();if(!g)return;
+ resetEditorCoverUrl();edit('editorCover').value='';
+ const keep=document.querySelector('input[name="editorCoverAction"][value="keep"]');if(keep)keep.checked=true;
+ edit('editorName').value=g.title||'';
+ edit('editorCategory').value=g.category||'Jeux HTML';
+ edit('editorDescription').value=g.description||'';
+ const icon=edit('editorIcon');if(!Array.from(icon.options).some(o=>o.value===g.icon))icon.add(new Option(g.icon||'🎮',g.icon||'🎮'));
+ icon.value=g.icon||'🎮';edit('editorAccent').value=/^#[0-9a-f]{6}$/i.test(g.accent)?g.accent:'#64dbe3';
+ edit('editorGitHubPath').textContent='uploads/'+g.id+'/';edit('editorCoverPicker').hidden=true;
+ previewEditor();
+}
+function editorCoverAction(){return document.querySelector('input[name="editorCoverAction"]:checked')?.value||'keep'}
+function previewEditor(){
+ const g=currentEditedGame();if(!g)return;
+ edit('editorLiveTitle').textContent=edit('editorName').value.trim()||g.title;
+ edit('editorLiveDescription').textContent=edit('editorDescription').value.trim()||'Aucune description';
+ edit('editorLiveArt').style.setProperty('--accent',edit('editorAccent').value);
+ edit('editorLiveIcon').textContent=edit('editorIcon').value;
+ const img=edit('editorLiveImage');const action=editorCoverAction();
+ const url=action==='replace'?editorCoverUrl:action==='keep'&&g.cover?'/games/'+encodeURIComponent(g.id)+'/'+encodeURIComponent(g.cover):null;
+ img.hidden=!url;edit('editorLiveIcon').hidden=!!url;if(url)img.src=url;else img.removeAttribute('src');
+ edit('editorCoverPicker').hidden=action!=='replace';
+}
+edit('editorOpen').addEventListener('click',()=>{
+ edit('editorDisabled').hidden=canUpload;
+ refreshEditorChoices();adminNotice('editorStatus','');showDialog('editorModal');
+});
+edit('editorGame').addEventListener('change',()=>{loadEditorGame();adminNotice('editorStatus','')});
+for(const id of ['editorName','editorCategory','editorDescription','editorIcon','editorAccent'])edit(id).addEventListener('input',previewEditor);
+for(const el of document.querySelectorAll('input[name="editorCoverAction"]'))el.addEventListener('change',previewEditor);
+edit('editorCover').addEventListener('change',()=>{
+ resetEditorCoverUrl();const f=edit('editorCover').files[0];
+ if(f){if(!['image/png','image/jpeg','image/webp'].includes(f.type)||f.size>MAX_COVER){adminNotice('editorStatus','Couverture : PNG, JPG ou WebP · 2 Mo maximum.',true);edit('editorCover').value=''}
+ else{editorCoverUrl=URL.createObjectURL(f);adminNotice('editorStatus','')}}
+ previewEditor();
+});
+edit('editorForm').addEventListener('submit',async e=>{
+ e.preventDefault();const game=currentEditedGame(),btn=edit('editorSave');if(!game)return;
+ const action=editorCoverAction(),file=edit('editorCover').files[0];
+ if(action==='replace'&&!file)return adminNotice('editorStatus','Choisis une nouvelle image ou sélectionne « Conserver l’actuelle ».',true);
+ btn.disabled=true;btn.textContent='Enregistrement…';adminNotice('editorStatus','Envoi des modifications sur GitHub…');
+ try{
+  const body={id:game.id,title:edit('editorName').value,description:edit('editorDescription').value,category:edit('editorCategory').value,icon:edit('editorIcon').value,accent:edit('editorAccent').value,password:edit('editorPassword').value,coverAction:action};
+  if(action==='replace'){body.coverBase64=await toBase64(file);body.coverName=file.name}
+  const result=await postAdmin('/api/portal/editor/save',body);
+  adminNotice('editorStatus','✅ '+result.message+' Couverture : uploads/'+game.id+'/.');
+ }catch(error){adminNotice('editorStatus',error.message,true)}
+ finally{btn.disabled=false;btn.textContent='💾 Enregistrer les modifications ↗'}
+});
+edit('editorModal').addEventListener('close',resetEditorCoverUrl);
+
 loadPortal();

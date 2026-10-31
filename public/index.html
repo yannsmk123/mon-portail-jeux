@@ -14,17 +14,17 @@
   <div class="site">
     <header class="site-header">
       <a class="identity" href="/" aria-label="Retour à l'accueil">
-        <span class="identity-mark">✦</span><span class="identity-words"><span>MY <b>GAME</b> ARCADE</span><small>LE PORTAIL DES JEUX MAISON</small></span>
+        <span class="identity-mark">✦</span><span class="identity-words"><span id="portalBrand">MY <b>GAME</b> ARCADE</span><small id="portalSubtitle">LE PORTAIL DES JEUX MAISON</small></span>
       </a>
-      <div class="header-actions"><span class="online-chip"><span class="dot"></span> Portail en ligne</span><button type="button" id="adminOpen" class="quiet-btn">＋ Ajouter un jeu</button></div>
+      <div class="header-actions"><span class="online-chip"><span class="dot"></span> Portail en ligne</span><button type="button" id="settingsOpen" class="quiet-btn">⚙ Paramètres</button><button type="button" id="editorOpen" class="quiet-btn">✎ Éditeur de jeu</button><button type="button" id="adminOpen" class="quiet-btn">＋ Ajouter un jeu</button></div>
     </header>
     <main>
       <section class="hero" aria-labelledby="heroTitle">
         <div class="hero-orb orb-a" aria-hidden="true"></div><div class="hero-orb orb-b" aria-hidden="true"></div>
         <div class="hero-copy">
           <span class="eyebrow"><span class="spark">✦</span> CRÉÉ POUR JOUER ENSEMBLE</span>
-          <h1 id="heroTitle">Des jeux faits maison.<br><em>Des parties sans frontières.</em></h1>
-          <p>Retrouve tous mes jeux au même endroit. Joue en solo, lance un défi à un ami et partage des moments, même à distance.</p>
+          <h1 id="heroTitle"><span id="portalHeroTitle">Des jeux faits maison.</span><br><em id="portalHeroHighlight">Des parties sans frontières.</em></h1>
+          <p id="portalIntro">Retrouve tous mes jeux au même endroit. Joue en solo, lance un défi à un ami et partage des moments, même à distance.</p>
           <div class="hero-actions"><a href="#les-jeux" class="primary-action">Explorer les jeux <span>↗</span></a><span class="hero-mini">Gratuit · Depuis ton navigateur</span></div>
         </div>
         <div class="hero-art" aria-hidden="true"><div class="orbit orbit-outer"></div><div class="orbit orbit-inner"></div><span class="art-card a">⚡<small>01</small></span><span class="art-card b">✦<small>02</small></span><span class="art-card c">★<small>03</small></span><span class="art-center">PLAY</span></div>
@@ -80,5 +80,62 @@
       <p class="admin-tip">Le guide inclus dans le pack explique ces étapes avec les intitulés exacts des boutons.</p>
     </div>
   </dialog>
+
+  <!-- V111 : onglet de paramètres du portail (publication sur GitHub) -->
+  <dialog id="settingsModal" class="admin-dialog editor-dialog" aria-labelledby="settingsTitle">
+    <form method="dialog"><button class="close-dialog" aria-label="Fermer">✕</button></form>
+    <div class="admin-label">PERSONNALISATION DU PORTAIL</div>
+    <h2 id="settingsTitle">⚙ Paramètres</h2>
+    <p class="admin-explain">Modifie les textes de la page d’accueil. Ils sont enregistrés sur GitHub et publiés automatiquement par Render.</p>
+    <div id="settingsDisabled" class="admin-lock-note" hidden>🔒 Active d’abord les trois variables <code>ADMIN_PASSWORD</code>, <code>GITHUB_TOKEN</code> et <code>GITHUB_REPOSITORY</code> sur Render (comme pour « Ajouter un jeu »).</div>
+    <form id="settingsForm">
+      <label class="field"><span>Nom du portail</span><input id="settingSiteName" maxlength="55" required placeholder="Mon Portail Jeux"></label>
+      <label class="field"><span>Sous-titre du logo</span><input id="settingSubtitle" maxlength="90" required></label>
+      <label class="field"><span>Grand titre de l’accueil</span><input id="settingHeroTitle" maxlength="110" required></label>
+      <label class="field"><span>Deuxième ligne du titre</span><input id="settingHeroHighlight" maxlength="110" required></label>
+      <label class="field"><span>Texte de présentation du portail</span><textarea id="settingIntro" rows="3" maxlength="400" required></textarea></label>
+      <label class="field admin-password-field"><span>Mot de passe administrateur</span><input id="settingPassword" type="password" autocomplete="off" required></label>
+      <button id="settingsSave" class="primary-action upload-action" type="submit">💾 Enregistrer les paramètres ↗</button>
+    </form>
+    <p id="settingsStatus" class="upload-notice" role="status"></p>
+  </dialog>
+
+  <!-- V111 : éditeur de la fiche visible dans la bibliothèque (sans modifier le jeu) -->
+  <dialog id="editorModal" class="admin-dialog editor-dialog" aria-labelledby="editorTitle">
+    <form method="dialog"><button class="close-dialog" aria-label="Fermer">✕</button></form>
+    <div class="admin-label">BIBLIOTHÈQUE · FICHES DES JEUX</div>
+    <h2 id="editorTitle">✎ Éditeur de jeu</h2>
+    <p class="admin-explain">Sélectionne un jeu déjà installé, puis change son titre, sa présentation et sa couverture. <b>Son code et ses sauvegardes ne seront pas modifiés.</b></p>
+    <div id="editorDisabled" class="admin-lock-note" hidden>🔒 Active d’abord l’administration GitHub dans les variables Render pour enregistrer les modifications.</div>
+    <form id="editorForm">
+      <label class="field"><span>Jeu à modifier</span><select id="editorGame" required></select></label>
+      <div class="editor-live-card">
+        <div class="editor-live-art" id="editorLiveArt"><span id="editorLiveIcon">🎮</span><img id="editorLiveImage" alt="Aperçu de la couverture" hidden></div>
+        <div class="editor-live-info"><small>APERÇU DE LA VIGNETTE</small><strong id="editorLiveTitle">Choisis un jeu</strong><span id="editorLiveDescription"></span></div>
+      </div>
+      <div class="editor-form-grid">
+        <label class="field"><span>Titre affiché sur le portail</span><input id="editorName" maxlength="80" required></label>
+        <label class="field"><span>Catégorie</span><input id="editorCategory" maxlength="55" list="editorCategoryList" required></label>
+      </div>
+      <datalist id="editorCategoryList"><option value="Cartes & stratégie"><option value="Jeux HTML"><option value="Arcade"><option value="Puzzle & réflexion"><option value="Aventure"><option value="Course"><option value="Plateforme"></datalist>
+      <label class="field"><span>Texte de présentation</span><textarea id="editorDescription" rows="3" maxlength="350" placeholder="Décris ton jeu…"></textarea></label>
+      <div class="editor-form-grid">
+        <label class="field"><span>Icône du jeu (si aucune image)</span><select id="editorIcon"><option>🎮</option><option>🃏</option><option>🧩</option><option>🎲</option><option>⚡</option><option>🧭</option><option>🏎️</option><option>⚔️</option><option>🚀</option><option>🌍</option><option>🎯</option><option>🏆</option><option>🕹️</option></select></label>
+        <label class="field"><span>Couleur de la vignette</span><input id="editorAccent" type="color" value="#64dbe3"></label>
+      </div>
+      <fieldset class="editor-cover-options"><legend>Image de couverture</legend>
+        <label><input type="radio" name="editorCoverAction" value="keep" checked> Conserver l’actuelle</label>
+        <label><input type="radio" name="editorCoverAction" value="replace"> Choisir une nouvelle image</label>
+        <label><input type="radio" name="editorCoverAction" value="remove"> Retirer la couverture</label>
+        <label class="field" id="editorCoverPicker" hidden><span>Nouvelle couverture PNG, JPG ou WebP · 2 Mo maximum</span><input type="file" id="editorCover" accept="image/png,image/jpeg,image/webp"></label>
+      </fieldset>
+      <p class="editor-storage-path">📁 Image enregistrée dans <code id="editorGitHubPath">uploads/nom-du-jeu/</code> sur GitHub.</p>
+      <label class="field admin-password-field"><span>Mot de passe administrateur</span><input type="password" id="editorPassword" required autocomplete="off"></label>
+      <button class="primary-action upload-action" id="editorSave" type="submit">💾 Enregistrer les modifications ↗</button>
+    </form>
+    <p id="editorStatus" class="upload-notice" role="status" aria-live="polite"></p>
+    <p class="admin-tip">La nouvelle fiche et l’image sont enregistrées dans le dossier GitHub du jeu. Après le redéploiement Render, tous les visiteurs verront la nouvelle présentation. Tu n’as pas à réimporter le jeu.</p>
+  </dialog>
+
 </body>
 </html>

@@ -40,3 +40,33 @@
 .upload-folder-hint{margin:8px 0 10px;padding:9px 11px;border-radius:9px;border:1px solid #3c6a72;background:#112d35;color:#b6eeda;font-size:11px;line-height:1.7}
 .upload-folder-hint[hidden]{display:none!important}
 .upload-folder-hint code{color:#e4fff5;font-weight:800;overflow-wrap:anywhere}
+
+/* V111 : boutons Paramètres et Éditeur, mises en page d'administration. */
+.header-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+.editor-dialog{width:min(720px,calc(100% - 24px));max-height:92dvh}
+.editor-dialog .field input,.editor-dialog .field select,.editor-dialog .field textarea{box-sizing:border-box;width:100%;color:#eff9ff;background:#0b1527;border:1px solid #526b88;padding:11px 12px;border-radius:9px;font:inherit;resize:vertical}
+.editor-dialog .field input[type=color]{padding:4px;min-height:43px;cursor:pointer}
+.editor-dialog .field{margin:13px 0}
+.editor-dialog .field span{font-weight:750;color:#daedf8}
+.editor-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.editor-live-card{border:1px solid #457c85;background:#0b2635;border-radius:14px;display:flex;align-items:center;gap:15px;padding:12px;margin:17px 0}
+.editor-live-art{width:126px;height:103px;border-radius:10px;background:linear-gradient(140deg,color-mix(in srgb,var(--accent,#64dbe3) 45%,#172338),#15243c);border:1px solid var(--accent,#64dbe3);display:grid;place-items:center;overflow:hidden;position:relative;flex:none}
+.editor-live-art span{font-size:41px}.editor-live-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.editor-live-art img[hidden],.editor-live-art span[hidden]{display:none!important}
+.editor-live-info{display:flex;flex-direction:column;gap:4px;min-width:0}
+.editor-live-info small{font-size:10px;letter-spacing:.1em;color:#9ce5c9;font-weight:900}
+.editor-live-info strong{font-size:18px;overflow-wrap:anywhere}
+.editor-live-info span{font-size:12px;color:#afc6d9;line-height:1.4}
+.editor-cover-options{border:1px solid #456279;border-radius:12px;margin:15px 0;padding:12px 15px;display:grid;gap:8px}
+.editor-cover-options legend{font-weight:800;color:#f3f9ff;padding:0 7px}
+.editor-cover-options label:not(.field){font-size:13px;display:flex;align-items:center;gap:8px;cursor:pointer}
+.editor-cover-options input[type=radio]{accent-color:#78e7ca}
+.editor-cover-options .field[hidden]{display:none}
+.editor-storage-path,.admin-lock-note{font-size:12px;color:#b1dfd2;background:#112d38;border:1px solid #3d6170;padding:10px 12px;border-radius:10px;overflow-wrap:anywhere}
+.admin-lock-note[hidden]{display:none}
+.editor-storage-path code{color:#e7fffa;font-weight:850}
+@media(max-width:760px){.header-actions{gap:5px}.header-actions .quiet-btn{font-size:10px;padding:8px 9px}.editor-form-grid{grid-template-columns:1fr}}
+@media(max-width:480px){.editor-live-art{width:86px;height:90px}.editor-live-info strong{font-size:15px}}
+
+/* V111 : descriptions éditables plus longues, sans déformer les vignettes. */
+.game-description{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;max-height:98px}

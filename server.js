@@ -56,6 +56,7 @@ function discoverGames(){
      catalog.set(id,{id,files:content,title,description,category,icon,accent:given.accent||'#64dbe3',cover,multiplayer:!!given.multiplayer,featured:!!given.featured});
    }catch(e){errors.push(`${relative}: ${e.message}`);console.error('Jeu ignoré :',relative,e.message)}
  }
+ applyPresentationOverlays();
 }
 discoverGames();
 // Jeu embarqué dans un dossier dédié, ajouté au catalogue sans modifier les ZIP existants.
@@ -131,6 +132,7 @@ if(gameMarvel){
  }catch(err){hostedMediaInfo.error=err.message;console.error('Médias MARVEL FUSION :',err.message)}
  gameMarvel.files.set('medias-par-defaut-version.json',Buffer.from(JSON.stringify(hostedMediaInfo)));
 }
+applyPresentationOverlays();
 const mime={'.html':'text/html; charset=utf-8','.htm':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.gif':'image/gif','.webp':'image/webp','.ico':'image/x-icon','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.mp4':'video/mp4','.webm':'video/webm','.json':'application/json; charset=utf-8','.wasm':'application/wasm','.woff2':'font/woff2','.woff':'font/woff','.ttf':'font/ttf','.txt':'text/plain; charset=utf-8','.pdf':'application/pdf'};
 function respond(res,code,data,type='text/html; charset=utf-8',headers={}){res.writeHead(code,{'Content-Type':type,'X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin',...headers});res.end(data)}
 function json(res,code,obj){respond(res,code,JSON.stringify(obj),'application/json; charset=utf-8',{'Cache-Control':'no-store'})}
@@ -144,6 +146,79 @@ function userAllowed(req){if(!siteCode)return true;
  return equal(hmac,crypto.createHmac('sha256',sigKey).update(expiry).digest('hex'))}
 function loginPage(bad=false){return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Accès au portail</title><style>body{min-height:100vh;display:grid;place-items:center;background:#0a1022;color:#f4f7ff;font:16px system-ui;margin:0}.box{width:min(420px,calc(100vw - 38px));padding:34px;background:#182642;border:1px solid #446380;border-radius:20px;box-sizing:border-box}h1{font-size:25px}input,button{box-sizing:border-box;width:100%;padding:15px;border-radius:9px;margin:6px 0;font:inherit}input{background:#091529;border:1px solid #526984;color:white}button{background:#e95779;color:white;font-weight:800;border:0;cursor:pointer}.error{color:#ffa4ba}</style></head><body><form class="box" action="/access" method="post"><div style="font-size:40px">🎮</div><h1>Portail de jeux privé</h1><p>Entre le code donné par l'hôte pour accéder aux jeux.</p>${bad?'<p class="error">Code incorrect, réessaie.</p>':''}<input aria-label="Code d’accès" name="code" type="password" autocomplete="off" required autofocus><button>Entrer</button></form></body></html>`}
 function adminConfigured(){return !!(process.env.ADMIN_PASSWORD&&process.env.GITHUB_TOKEN&&/^[\w.-]+\/[\w.-]+$/.test(process.env.GITHUB_REPOSITORY||''))}
+// V111 : réglages du portail et fiches de jeux stockés dans GitHub.
+// Pas de disque temporaire Render : les réglages survivent aux redéploiements.
+const PORTAL_SETTINGS_FILE=path.join(ROOT,'portal-settings.json');
+const DEFAULT_PORTAL_SETTINGS={siteName:'MY GAME ARCADE',subtitle:'LE PORTAIL DES JEUX MAISON',heroTitle:'Des jeux faits maison.',heroHighlight:'Des parties sans frontières.',intro:'Retrouve tous mes jeux au même endroit. Joue en solo, lance un défi à un ami et partage des moments, même à distance.'};
+function safeSettings(data){return {
+ siteName:cleanText(data?.siteName).slice(0,55)||DEFAULT_PORTAL_SETTINGS.siteName,
+ subtitle:cleanText(data?.subtitle).slice(0,90)||DEFAULT_PORTAL_SETTINGS.subtitle,
+ heroTitle:cleanText(data?.heroTitle).slice(0,110)||DEFAULT_PORTAL_SETTINGS.heroTitle,
+ heroHighlight:cleanText(data?.heroHighlight).slice(0,110)||DEFAULT_PORTAL_SETTINGS.heroHighlight,
+ intro:String(data?.intro||'').replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,400)||DEFAULT_PORTAL_SETTINGS.intro
+}}
+function portalSettings(){try{return safeSettings(JSON.parse(fs.readFileSync(PORTAL_SETTINGS_FILE,'utf8')))}catch(_){return {...DEFAULT_PORTAL_SETTINGS}}}
+function cleanDescription(raw){return String(raw||'').replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,350)}
+function safePresentation(info){
+ const title=cleanText(info?.title).slice(0,80);
+ if(!title)throw Error('Le titre du jeu est obligatoire.');
+ const accent=String(info?.accent||'').trim();
+ if(accent&&!/^#[0-9a-fA-F]{6}$/.test(accent))throw Error('Couleur invalide.');
+ return {title,description:cleanDescription(info?.description),category:cleanText(info?.category).slice(0,55)||'Jeux HTML',icon:cleanText(info?.icon).slice(0,6)||'🎮',accent:accent||'#64dbe3'};
+}
+function coverImage(imageBase64,coverName){
+ const image=Buffer.from(String(imageBase64||''),'base64');
+ if(image.length<12||image.length>2*1024*1024)throw Error('Couverture : maximum 2 Mo.');
+ const ext=String(coverName||'').toLowerCase().match(/\.(png|jpe?g|webp)$/)?.[1];
+ const valid=ext==='png'&&image.subarray(0,8).equals(Buffer.from('89504e470d0a1a0a','hex'))||
+  (ext==='jpg'||ext==='jpeg')&&image.subarray(0,3).equals(Buffer.from('ffd8ff','hex'))||
+  ext==='webp'&&image.toString('ascii',0,4)==='RIFF'&&image.toString('ascii',8,12)==='WEBP';
+ if(!valid)throw Error('Choisis une vraie image PNG, JPG ou WebP.');
+ return {bytes:image,filename:'couverture-portail.'+(ext==='jpeg'?'jpg':ext)};
+}
+function applyPresentationOverlays(){
+ for(const game of catalog.values()){
+  const base=path.join(UPLOADS,game.id);
+  const metaFile=path.join(base,'_presentation_portail.json');
+  if(!fs.existsSync(metaFile))continue;
+  try{
+   const data=JSON.parse(fs.readFileSync(metaFile,'utf8'));
+   const validated=safePresentation(data);
+   Object.assign(game,validated);
+   if(Object.prototype.hasOwnProperty.call(data,'cover')){
+    const file=String(data.cover||'');
+    if(!file)game.cover=null;
+    else if(/^couverture-portail\.(png|jpg|jpeg|webp)$/.test(file)){
+     const location=path.join(base,file);
+     if(fs.existsSync(location)){
+      const bytes=fs.readFileSync(location);
+      if(bytes.length<=2*1024*1024){game.files.set(file,bytes);game.cover=file}
+     }
+    }else if(game.files.has(file)){game.cover=file}
+   }
+  }catch(err){console.warn('Fiche portail ignorée pour',game.id,err.message)}
+ }
+}
+function checkAdminOrigin(req){
+ const origin=req.headers.origin;
+ if(!origin)return true;const host=req.headers['x-forwarded-host']||req.headers.host||'';
+ try{return new URL(origin).host===host}catch(_){return false}
+}
+function githubHeaders(){return {Authorization:`Bearer ${process.env.GITHUB_TOKEN}`,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','User-Agent':'Portail-Jeux-Perso','Content-Type':'application/json'}}
+async function githubSaveFile(target,content,message){
+ const repo=process.env.GITHUB_REPOSITORY,branch=process.env.GITHUB_BRANCH||'main';
+ const url=`https://api.github.com/repos/${repo}/contents/${target}`;
+ const headers=githubHeaders();
+ const found=await fetch(url+'?ref='+encodeURIComponent(branch),{headers,signal:AbortSignal.timeout(15000)});
+ let sha;
+ if(found.ok){const j=await found.json();if(j.type!=='file'||!j.sha)throw Error('Chemin GitHub non modifiable.');sha=j.sha}
+ else if(found.status!==404)throw Error('GitHub : vérification impossible ('+found.status+').');
+ const payload={message,content:content.toString('base64'),branch};if(sha)payload.sha=sha;
+ const saved=await fetch(url,{method:'PUT',headers,body:JSON.stringify(payload),signal:AbortSignal.timeout(45000)});
+ if(!saved.ok){const x=await saved.json().catch(()=>({}));throw Error('GitHub : '+saved.status+' '+cleanText(x.message||'Vérifie ton jeton et ses permissions.'))}
+ return {path:target,sha:(await saved.json()).content?.sha};
+}
+
 async function githubUpload({name,filename,content}){
  // Le NOM DU FICHIER importé détermine le nom du sous-dossier. Le titre du jeu reste libre.
  const slug=asSlug(filename.replace(/\.(zip|html?)$/i,''));
@@ -210,7 +285,36 @@ const server=http.createServer(async (req,res)=>{
      return lostCitiesHandler.call(lostCitiesServer,req,res);
    }
    if(req.method==='GET'&&pn==='/api/portal/games'){
-     return json(res,200,{games:[...catalog.values()].map(({files,...meta})=>meta),adminAvailable:adminConfigured(),repository:process.env.GITHUB_REPOSITORY||'',errors:errors.length?errors:undefined});
+     return json(res,200,{games:[...catalog.values()].map(({files,...meta})=>meta),settings:portalSettings(),adminAvailable:adminConfigured(),repository:process.env.GITHUB_REPOSITORY||'',errors:errors.length?errors:undefined});
+   }
+   if(req.method==='POST'&&(pn==='/api/portal/editor/save'||pn==='/api/portal/settings/save')){
+    if(!adminConfigured())return json(res,503,{error:'Configure ADMIN_PASSWORD, GITHUB_TOKEN et GITHUB_REPOSITORY sur Render pour utiliser l’administration.'});
+    if(!checkAdminOrigin(req))return json(res,403,{error:'Requête provenant d’un autre site refusée.'});
+    let payload;
+    try{payload=JSON.parse((await read(req,3*1024*1024)).toString('utf8'))}catch(_){return json(res,400,{error:'Données invalides ou trop volumineuses.'})}
+    if(!equal(payload.password,process.env.ADMIN_PASSWORD))return json(res,403,{error:'Mot de passe administrateur incorrect.'});
+    if(pn==='/api/portal/settings/save'){
+     const settings=safeSettings(payload.settings);
+     const saved=await githubSaveFile('portal-settings.json',Buffer.from(JSON.stringify(settings,null,2)+'\n'),'Modifier les paramètres du portail');
+     return json(res,200,{ok:true,settings,path:saved.path,message:'Paramètres enregistrés sur GitHub. Ils apparaîtront après le redéploiement Render.'});
+    }
+    const id=String(payload.id||'');const game=catalog.get(id);
+    if(!game||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id))return json(res,404,{error:'Jeu introuvable.'});
+    const info=safePresentation(payload);
+    const coverAction=payload.coverAction||'keep';
+    if(!['keep','replace','remove'].includes(coverAction))throw Error('Option de couverture invalide.');
+    // Toujours dans le dossier du jeu : uploads/identifiant-du-jeu/couverture-portail.ext.
+    // Les ZIP existants restent intacts, y compris MARVEL et LOST CITIES.
+    let cover=game.cover||'';
+    if(coverAction==='remove')cover='';
+    if(coverAction==='replace'){
+     const image=coverImage(payload.coverBase64,payload.coverName);
+     cover=image.filename;
+     await githubSaveFile(`uploads/${id}/${image.filename}`,image.bytes,`Couverture du jeu ${id}`);
+    }
+    const meta={...info,cover};
+    const saved=await githubSaveFile(`uploads/${id}/_presentation_portail.json`,Buffer.from(JSON.stringify(meta,null,2)+'\n'),`Modifier la présentation du jeu ${id}`);
+    return json(res,200,{ok:true,path:saved.path,coverPath:coverAction==='replace'?`uploads/${id}/${cover}`:null,message:'Fiche enregistrée sur GitHub. Elle sera visible après le redéploiement de Render.'});
    }
    if(req.method==='POST'&&pn==='/api/portal/upload'){
       if(!adminConfigured())return json(res,503,{error:'Envoi direct non configuré : utilise GitHub > uploads > Add file > Upload files.'});
