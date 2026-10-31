@@ -1,0 +1,37 @@
+MARVEL SPLENDOR — VERSION COMPATIBLE GITHUB PAGES
+================================================
+
+Pourquoi cette version ?
+Ton JSON d'origine fait environ 75 Mo, et GitHub limite les téléchargements
+via l'interface web à 25 Mio PAR fichier. Cette version partage le même JSON
+(sans changer le moindre caractère) en fichiers de 18 millions de caractères.
+Le jeu reconstitue le JSON automatiquement dans le navigateur.
+
+INSTALLATION (sur github.com, page Code de ton dépôt)
+1. Décompresse ce ZIP SUR TON ORDINATEUR, pas dans GitHub.
+2. Ouvre le dossier MARVEL-SPLENDOR-GITHUB-PRET.
+3. Dans le dépôt GitHub > Add file > Upload files, fais glisser LES FICHIERS
+   DU DOSSIER (pas le ZIP !) :
+     index.html
+     marvel-splendor-assets.json
+     marvel-splendor-assets.part-01.txt (et 02, 03, 04, 05 selon le pack)
+     .nojekyll (optionnel)
+   Si .nojekyll est caché, ce n'est pas grave.
+4. Clique sur « Commit changes » pour confirmer l'envoi.
+5. Vérifie Settings > Pages > Build and deployment > Deploy from a branch,
+   branch main, dossier /(root) (ou le dossier configuré pour ton site).
+6. Recharge ton site : le bandeau indique la récupération des blocs et
+   l'importation des médias. Au premier lancement, le navigateur peut
+   prendre un peu de temps pour importer les données.
+
+IMPORTANT
+- Ne mets PAS seulement le ZIP dans GitHub. GitHub Pages ne l'extrait pas.
+- NE mets PAS l'ancien fichier marvel-splendor-assets.json de 75 Mo : ici,
+  le petit marvel-splendor-assets.json est un manifeste qui pointe vers les blocs.
+- Les fichiers doivent être dans le MÊME dossier que index.html.
+- Respecte exactement les noms (majuscules/minuscules).
+- Le jeu conserve les règles, coûts, niveaux et suppressions de la sauvegarde.
+- Si les cartes ont déjà été personnalisées dans un autre navigateur, le
+  bouton « Restaurer les cartes du JSON » permet de réappliquer le catalogue.
+- Si des fichiers n'apparaissent PAS dans le dépôt, assure-toi d'avoir confirmé
+  « Commit changes » et d'être sur la bonne branche.

@@ -6158,6 +6158,36 @@ updateUI();
    // Une actualisation unique synchronise toutes les bibliothèques.
    location.reload();
  }
+ // GitHub accepte les blocs individuellement (le JSON original dépasse 25 Mio).
+ async function resolveGitHubChunks(text,base){
+   // Seul le petit manifeste est décodé ici ; on ne parse pas deux fois le gros JSON.
+   if(text.length>100000 || !text.includes('marvel-splendor-assets-chunks'))return text;
+   let manifest;
+   try{manifest=JSON.parse(text);}catch(_){return text;}
+   if(!manifest||manifest.format!=='marvel-splendor-assets-chunks')return text;
+   if(manifest.version!==1||!Array.isArray(manifest.parts)||manifest.parts.length<1||manifest.parts.length>50)
+     throw Error('Manifeste des ressources GitHub invalide.');
+   const fragments=[];
+   let total=0;
+   for(let i=0;i<manifest.parts.length;i++){
+     const part=manifest.parts[i];
+     if(!part||typeof part.file!=='string'||!/^marvel-splendor-assets\.part-\d{2}\.txt$/.test(part.file)||
+        typeof part.length!=='number'||part.length<1||part.length>24000000)
+       throw Error('Description du bloc JSON invalide.');
+     const url=new URL(part.file,base);
+     if(url.origin!==location.origin)throw Error('Bloc JSON situé hors du site.');
+     status('📥 Chargement des ressources '+(i+1)+' / '+manifest.parts.length+'…');
+     const response=await fetch(url.href,{cache:'no-store'});
+     if(!response.ok)throw Error('Bloc manquant ('+response.status+') : '+part.file+' — vérifie son dépôt GitHub.');
+     const fragment=await response.text();
+     if(fragment.length!==part.length)throw Error('Bloc incomplet : '+part.file);
+     fragments.push(fragment);
+     total+=fragment.length;
+   }
+   if(total!==manifest.totalChars)throw Error('La sauvegarde JSON est incomplète.');
+   status('✅ '+manifest.parts.length+' blocs récupérés. Vérification des données…');
+   return fragments.join('');
+ }
  async function verify(){
    if(busy)return;busy=true;check.disabled=true;
    try{
@@ -6174,7 +6204,7 @@ updateUI();
        const response=await fetch(target.href,{cache:'no-store'});
        if(response.status===404)continue;
        if(!response.ok)throw Error('Lecture du JSON ('+response.status+') : '+filename);
-       const json=await response.text();
+       const json=await resolveGitHubChunks(await response.text(),target.href);
        await importPackage(json,target.href,filename);
        return;
      }

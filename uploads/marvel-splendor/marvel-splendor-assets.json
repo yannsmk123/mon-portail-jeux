@@ -1,0 +1,29 @@
+{
+  "format": "marvel-splendor-assets-chunks",
+  "version": 1,
+  "description": "Marvel Splendor - sauvegarde JSON répartie pour GitHub Pages",
+  "totalChars": 75082392,
+  "parts": [
+    {
+      "file": "marvel-splendor-assets.part-01.txt",
+      "length": 18000002
+    },
+    {
+      "file": "marvel-splendor-assets.part-02.txt",
+      "length": 18000000
+    },
+    {
+      "file": "marvel-splendor-assets.part-03.txt",
+      "length": 18000000
+    },
+    {
+      "file": "marvel-splendor-assets.part-04.txt",
+      "length": 18000000
+    },
+    {
+      "file": "marvel-splendor-assets.part-05.txt",
+      "length": 3082390
+    }
+  ],
+  "sourceSHA256": "dbeabcd1ec6f49bc9674527c96d1d34607aae378385dee2d1c0e57b6dd343f30"
+}
