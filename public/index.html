@@ -46,6 +46,7 @@
       <form id="uploadForm">
         <div class="upload-steps"><span>1 · Fichier</span><span>2 · Présentation</span><span>3 · Publier</span></div>
         <label class="file-drop" id="dropZone" for="uploadFile"><span class="drop-icon">⤒</span><strong id="fileLabel">Choisir ou glisser ton jeu HTML / ZIP</strong><small>Un seul HTML ou un ZIP complet · 20 Mo maximum</small><input id="uploadFile" type="file" accept=".zip,.html,.htm" required></label>
+        <p class="upload-folder-hint" id="uploadFolderHint" hidden>📁 Rangement automatique : <code id="uploadFolderPath"></code></p>
         <div class="upload-preview" id="uploadPreview" hidden>
           <div class="upload-preview-cover" id="uploadPreviewCover"><span id="uploadPreviewIcon">🎮</span><img id="uploadCoverImage" alt="Aperçu de la couverture" hidden></div>
           <div class="upload-preview-info"><small>APERÇU DE LA VIGNETTE</small><strong id="uploadPreviewTitle">Mon jeu</strong><span id="uploadPreviewDescription">Un jeu à découvrir sur le portail.</span></div>

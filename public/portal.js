@@ -44,8 +44,11 @@ byId('search').addEventListener('input',e=>showGames(e.target.value));
 byId('adminOpen').addEventListener('click',()=>byId('adminModal').showModal());
 const up=id=>byId(id), MAX_GAME=20*1024*1024, MAX_COVER=2*1024*1024;
 let coverPreviewUrl=null,uploadPoll=null;
+function uploadFileSlug(filename){return String(filename||'').replace(/\.(zip|html?)$/i,'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,55)}
 function preview(){
  const file=up('uploadFile').files[0];up('uploadPreview').hidden=!file;
+ const slug=uploadFileSlug(file?.name||'');up('uploadFolderHint').hidden=!slug;
+ up('uploadFolderPath').textContent=slug?`uploads/${slug}/${slug}.zip`:'';
  up('uploadPreviewTitle').textContent=up('uploadName').value.trim()||file?.name||'Mon jeu';
  up('uploadPreviewDescription').textContent=up('uploadDescription').value.trim()||'Un jeu à découvrir sur le portail.';
  up('uploadPreviewIcon').textContent=up('uploadIcon').value;
@@ -110,7 +113,7 @@ up('uploadForm').addEventListener('submit',async e=>{
   const result=await res.json();if(!res.ok)throw Error(result.error||'Erreur lors de la publication.');
   message('✅ Envoi réussi. Attente de la mise en ligne par Render…');
   up('uploadResult').hidden=false;up('uploadResultTitle').textContent='🚀 Ton jeu est envoyé sur GitHub !';
-  up('uploadResultInfo').textContent='Render va actualiser le portail automatiquement. Tu peux garder cette fenêtre ouverte pour suivre la publication.';
+  up('uploadResultInfo').textContent='📁 Rangé dans '+result.folder+' sur GitHub. Render va actualiser le portail automatiquement.';
   up('uploadResultLink').hidden=true;
   up('uploadForm').reset();up('fileLabel').textContent='Choisir ou glisser ton jeu HTML / ZIP';
   if(coverPreviewUrl)URL.revokeObjectURL(coverPreviewUrl);coverPreviewUrl=null;preview();

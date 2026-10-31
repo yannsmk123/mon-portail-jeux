@@ -17,13 +17,33 @@ function metadata(content,name){const html=(content.get('index.html')||Buffer.al
  const desc=html.match(/<meta\s+[^>]*name=["']description["'][^>]*content=["']([^"']{1,350})["'][^>]*>/i)?.[1];
  const cover=['cover.webp','cover.png','cover.jpg','cover.jpeg','preview.webp','preview.png','preview.jpg'].find(x=>content.has(x));
  return {title:cleanText(htmlText(title||name).replace(/\s+[—–|·]\s+(Le jeu de cartes|Le Jeu de Cartes|le jeu)$/i,'')),description:cleanText(htmlText(desc||'Un jeu HTML à découvrir sur le portail.')),cover:cover||null}}
+// V110 : les nouveaux jeux sont rangés dans uploads/nom-du-fichier/nom-du-fichier.zip.
+// Les anciens ZIP et HTML directement dans uploads/ restent pris en charge sans migration.
+function listUploadedGames(){
+ const candidates=[];
+ const gameFile=name=>/\.(zip|html?)$/i.test(name);
+ for(const entry of fs.readdirSync(UPLOADS,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name))){
+  if(entry.name.startsWith('.'))continue;
+  if(entry.isFile()&&gameFile(entry.name)){
+   candidates.push({filename:entry.name,relative:entry.name,id:asSlug(entry.name.replace(/\.(zip|html?)$/i,''))});
+  }else if(entry.isDirectory()){
+   // Ne parcourir qu'un niveau : ignore par ex. les packs de médias Marvel et les ressources imbriquées.
+   for(const inside of fs.readdirSync(path.join(UPLOADS,entry.name),{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name))){
+    if(inside.isFile()&&gameFile(inside.name)){
+     candidates.push({filename:inside.name,relative:entry.name+'/'+inside.name,id:asSlug(entry.name)});
+    }
+   }
+  }
+ }
+ return candidates;
+}
 function discoverGames(){
  if(!fs.existsSync(UPLOADS))fs.mkdirSync(UPLOADS,{recursive:true});
- const files=fs.readdirSync(UPLOADS).filter(x=>/\.(zip|html?|htm)$/i.test(x)).sort();
+ const files=listUploadedGames();
  let total=0;
- for(const filename of files){
-   try{const id=asSlug(filename.replace(/\.(zip|html?)$/i,''));if(!id||catalog.has(id))throw Error('Nom de jeu en double.');
-     const bytes=fs.readFileSync(path.join(UPLOADS,filename));if(bytes.length>MAX_ARCHIVE)throw Error('Archive de plus de 20 Mo.');
+ for(const {filename,relative,id} of files){
+   try{if(!id||catalog.has(id))throw Error('Nom de jeu en double.');
+     const bytes=fs.readFileSync(path.join(UPLOADS,relative));if(bytes.length>MAX_ARCHIVE)throw Error('Archive de plus de 20 Mo.');
      const content=fromUpload(filename,bytes);total+=[...content.values()].reduce((n,b)=>n+b.length,0);if(total>90*1024*1024)throw Error('Limite mémoire des jeux atteinte.');
      const given=presets[id]||{}; const meta=metadata(content,id.replaceAll('-',' '));
      let uploadInfo={};
@@ -34,7 +54,7 @@ function discoverGames(){
      const icon=cleanText(uploadInfo.icon).slice(0,6)||given.icon||'🎮';
      const cover=uploadInfo.cover&&content.has(uploadInfo.cover)?uploadInfo.cover:meta.cover;
      catalog.set(id,{id,files:content,title,description,category,icon,accent:given.accent||'#64dbe3',cover,multiplayer:!!given.multiplayer,featured:!!given.featured});
-   }catch(e){errors.push(`${filename}: ${e.message}`);console.error('Jeu ignoré :',filename,e.message)}
+   }catch(e){errors.push(`${relative}: ${e.message}`);console.error('Jeu ignoré :',relative,e.message)}
  }
 }
 discoverGames();
@@ -125,21 +145,26 @@ function userAllowed(req){if(!siteCode)return true;
 function loginPage(bad=false){return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Accès au portail</title><style>body{min-height:100vh;display:grid;place-items:center;background:#0a1022;color:#f4f7ff;font:16px system-ui;margin:0}.box{width:min(420px,calc(100vw - 38px));padding:34px;background:#182642;border:1px solid #446380;border-radius:20px;box-sizing:border-box}h1{font-size:25px}input,button{box-sizing:border-box;width:100%;padding:15px;border-radius:9px;margin:6px 0;font:inherit}input{background:#091529;border:1px solid #526984;color:white}button{background:#e95779;color:white;font-weight:800;border:0;cursor:pointer}.error{color:#ffa4ba}</style></head><body><form class="box" action="/access" method="post"><div style="font-size:40px">🎮</div><h1>Portail de jeux privé</h1><p>Entre le code donné par l'hôte pour accéder aux jeux.</p>${bad?'<p class="error">Code incorrect, réessaie.</p>':''}<input aria-label="Code d’accès" name="code" type="password" autocomplete="off" required autofocus><button>Entrer</button></form></body></html>`}
 function adminConfigured(){return !!(process.env.ADMIN_PASSWORD&&process.env.GITHUB_TOKEN&&/^[\w.-]+\/[\w.-]+$/.test(process.env.GITHUB_REPOSITORY||''))}
 async function githubUpload({name,filename,content}){
- const slug=asSlug(name||filename.replace(/\.[^.]+$/,''));if(!slug)throw Error('Donne un nom au jeu.');
+ // Le NOM DU FICHIER importé détermine le nom du sous-dossier. Le titre du jeu reste libre.
+ const slug=asSlug(filename.replace(/\.(zip|html?)$/i,''));
+ if(!slug)throw Error('Le nom du fichier doit contenir au moins une lettre ou un chiffre.');
  if(['marvel-fusion','lost-cities-duel'].includes(slug)||catalog.has(slug)){
-  const e=Error('Ce nom est déjà utilisé. Choisis un autre nom pour ne pas remplacer un jeu existant.');e.status=409;throw e;
+  const e=Error('Un jeu utilise déjà ce nom de fichier. Renomme ton fichier avant de réessayer.');e.status=409;throw e;
  }
- const target=`uploads/${slug}.zip`;
+ const folder=`uploads/${slug}`;
+ const target=`${folder}/${slug}.zip`;
  const repository=process.env.GITHUB_REPOSITORY,branch=process.env.GITHUB_BRANCH||'main';
- const endpoint=`https://api.github.com/repos/${repository}/contents/${target}`;
+ const root=`https://api.github.com/repos/${repository}/contents/`;
+ const endpoint=root+target;
  const headers={Authorization:`Bearer ${process.env.GITHUB_TOKEN}`,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','User-Agent':'Portail-Jeux-Perso','Content-Type':'application/json'};
- const get=await fetch(endpoint+'?ref='+encodeURIComponent(branch),{headers,signal:AbortSignal.timeout(15000)});
- if(get.status===200){const e=Error('Ce jeu existe déjà sur GitHub. Choisis un autre nom.');e.status=409;throw e;}
+ // Empêche de mélanger deux jeux dans un même sous-dossier, même si le serveur n'a pas encore été redéployé.
+ const get=await fetch(root+folder+'?ref='+encodeURIComponent(branch),{headers,signal:AbortSignal.timeout(15000)});
+ if(get.status===200){const e=Error('Un dossier existe déjà pour ce fichier sur GitHub. Renomme ton fichier et réessaie.');e.status=409;throw e;}
  if(get.status!==404)throw Error('GitHub ne répond pas à la vérification ('+get.status+'). Vérifie le dépôt et le jeton.');
- const payload={message:`Ajouter le jeu ${slug} depuis le portail`,content:content.toString('base64'),branch};
+ const payload={message:`Ajouter le jeu ${slug} dans son dossier uploads`,content:content.toString('base64'),branch};
  const resp=await fetch(endpoint,{method:'PUT',headers,body:JSON.stringify(payload),signal:AbortSignal.timeout(45000)});
  if(!resp.ok){const error=await resp.json().catch(()=>({}));throw Error(`GitHub a refusé l'envoi (${resp.status}) : ${cleanText(error.message||'Vérifie les permissions Contents: Read and write du jeton.')}`)}
- return {slug,path:target};
+ return {slug,folder:folder+'/',path:target};
 }
 function gameUpload({name,description,category,icon,filename,base64,coverBase64,coverName}){
  const binary=Buffer.from(String(base64||''),'base64');

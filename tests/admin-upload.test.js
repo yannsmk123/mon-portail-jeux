@@ -13,7 +13,7 @@ test('Publication directe GitHub: mot de passe, archive, fiche, couverture et pr
   const url=String(input);
   if(url.startsWith('https://api.github.com/')){
    if((options?.method||'GET')==='GET')return new Response(existing.has(url.split('?')[0])?'{}':'{}',{status:existing.has(url.split('?')[0])?200:404,headers:{'Content-Type':'application/json'}});
-   const payload=JSON.parse(options.body);githubWrites.push({url,payload});existing.add(url);
+   const payload=JSON.parse(options.body);githubWrites.push({url,payload});existing.add(url);existing.add(url.slice(0,url.lastIndexOf('/')));
    return new Response(JSON.stringify({content:{path:url}}),{status:201,headers:{'Content-Type':'application/json'}});
   }
   return realFetch(input,options);
@@ -21,20 +21,21 @@ test('Publication directe GitHub: mot de passe, archive, fiche, couverture et pr
  await new Promise(done=>server.listen(0,'127.0.0.1',done));
  const base='http://127.0.0.1:'+server.address().port;
  const post=async body=>{const r=await realFetch(base+'/api/portal/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return {code:r.status,data:await r.json()}};
- const body={name:'Une belle aventure',filename:'monjeu.html',base64:Buffer.from('<!doctype html><html><head><title>Test</title></head><body>Jouer</body></html>').toString('base64'),description:'Une aventure en solo',category:'Puzzle & réflexion',icon:'🧩',password:process.env.ADMIN_PASSWORD};
+ const body={name:'Une belle aventure',filename:'Mon Jeu Aventure.html',base64:Buffer.from('<!doctype html><html><head><title>Test</title></head><body>Jouer</body></html>').toString('base64'),description:'Une aventure en solo',category:'Puzzle & réflexion',icon:'🧩',password:process.env.ADMIN_PASSWORD};
  try{
   const wrong=await post({...body,password:'wrong'});assert.equal(wrong.code,403);assert.equal(githubWrites.length,0);
-  const reserved=await post({...body,name:'MARVEL FUSION'});assert.equal(reserved.code,409);assert.equal(githubWrites.length,0);
+  const reserved=await post({...body,name:'MARVEL FUSION',filename:'MARVEL FUSION.html'});assert.equal(reserved.code,409);assert.equal(githubWrites.length,0);
   const invalid=await post({...body,filename:'server.js'});assert.equal(invalid.code,400);
   const png=Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489','hex');
-  const done=await post({...body,coverName:'mon-image.png',coverBase64:png.toString('base64')});assert.equal(done.code,201,JSON.stringify(done));assert.equal(done.data.slug,'une-belle-aventure');
+  const done=await post({...body,coverName:'mon-image.png',coverBase64:png.toString('base64')});assert.equal(done.code,201,JSON.stringify(done));assert.equal(done.data.slug,'mon-jeu-aventure');assert.equal(done.data.folder,'uploads/mon-jeu-aventure/');assert.equal(done.data.path,'uploads/mon-jeu-aventure/mon-jeu-aventure.zip');
   assert.equal(githubWrites.length,1);
-  assert.match(githubWrites[0].url,/uploads\/une-belle-aventure.zip$/);
+  assert.match(githubWrites[0].url,/uploads\/mon-jeu-aventure\/mon-jeu-aventure.zip$/);
+  assert.ok(githubWrites[0].payload.message.includes('son dossier uploads'));
   const uploaded=fromUpload('payload.zip',Buffer.from(githubWrites[0].payload.content,'base64'));
   assert.match(uploaded.get('index.html').toString(),/Jouer/);
   assert.equal(uploaded.get('_couverture_portail.png').toString('hex'),png.toString('hex'));
   const meta=JSON.parse(uploaded.get('_portail_jeu.json').toString());assert.equal(meta.title,body.name);assert.equal(meta.category,body.category);assert.equal(meta.icon,'🧩');assert.equal(meta.cover,'_couverture_portail.png');
-  const duplicate=await post(body);assert.equal(duplicate.code,409);assert.equal(githubWrites.length,1);
+  const duplicate=await post(body);assert.equal(duplicate.code,409);assert.equal(githubWrites.length,1);assert.match(duplicate.data.error,/dossier existe déjà/);
   const badCover=await post({...body,name:'Another',coverName:'fake.png',coverBase64:Buffer.from('not really png').toString('base64')});assert.equal(badCover.code,400);
   const otherSite=await realFetch(base+'/api/portal/upload',{method:'POST',headers:{'Content-Type':'application/json','Origin':'https://attacker.example'},body:JSON.stringify(body)});assert.equal(otherSite.status,403);
  }finally{global.fetch=realFetch;restoreEnv();await new Promise(done=>server.close(done))}

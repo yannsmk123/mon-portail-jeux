@@ -35,3 +35,8 @@
 .manual-secondary{display:block;text-align:center;padding:11px;margin-top:9px;border:1px solid #638894;border-radius:10px;color:#d7f9eb;font-size:12px;font-weight:750}
 .admin-manual-alternate{margin-top:14px}
 @media(max-width:480px){.admin-dialog-v109{padding:16px}.upload-field-grid{grid-template-columns:1fr}.upload-steps span{font-size:9px}.upload-preview-cover{width:82px}}
+
+/* V110 — Aperçu du rangement automatique des jeux dans uploads/. */
+.upload-folder-hint{margin:8px 0 10px;padding:9px 11px;border-radius:9px;border:1px solid #3c6a72;background:#112d35;color:#b6eeda;font-size:11px;line-height:1.7}
+.upload-folder-hint[hidden]{display:none!important}
+.upload-folder-hint code{color:#e4fff5;font-weight:800;overflow-wrap:anywhere}
