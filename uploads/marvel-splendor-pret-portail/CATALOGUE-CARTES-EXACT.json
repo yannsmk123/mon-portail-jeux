@@ -1,0 +1,1475 @@
+{
+  "custom": [
+    {
+      "name": "Le Fleau",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 5,
+      "bonus": 3,
+      "cost": [
+        0,
+        0,
+        3,
+        0,
+        7
+      ],
+      "av": 0,
+      "id": "custom-1792882975855-55vbz",
+      "customId": "custom-1792882975855-55vbz",
+      "time": true
+    },
+    {
+      "name": "Dr.Octopus",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 4,
+      "bonus": 2,
+      "cost": [
+        0,
+        7,
+        0,
+        0,
+        0
+      ],
+      "av": 0,
+      "id": "custom-1792883180263-ah6hw",
+      "customId": "custom-1792883180263-ah6hw",
+      "time": true
+    },
+    {
+      "name": "Le Collectionneur",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 2,
+      "bonus": 2,
+      "cost": [
+        0,
+        0,
+        0,
+        0,
+        5
+      ],
+      "av": 0,
+      "id": "custom-1792885273499-xoktp",
+      "customId": "custom-1792885273499-xoktp",
+      "time": false
+    },
+    {
+      "name": "Mysterio",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 2,
+      "bonus": 1,
+      "cost": [
+        3,
+        0,
+        0,
+        5,
+        0
+      ],
+      "av": 0,
+      "id": "custom-1792885423423-xgukq",
+      "customId": "custom-1792885423423-xgukq",
+      "time": false
+    },
+    {
+      "name": "Ronan",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 2,
+      "bonus": 3,
+      "cost": [
+        0,
+        0,
+        5,
+        0,
+        0
+      ],
+      "av": 0,
+      "id": "custom-1792885678169-bo1kj",
+      "customId": "custom-1792885678169-bo1kj",
+      "time": false
+    },
+    {
+      "name": "Punisher",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 2,
+      "bonus": 4,
+      "cost": [
+        5,
+        0,
+        0,
+        0,
+        0
+      ],
+      "av": 0,
+      "id": "custom-1792885706213-uutwd",
+      "customId": "custom-1792885706213-uutwd",
+      "time": false
+    },
+    {
+      "name": "Maria Hill",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 1,
+      "bonus": 2,
+      "cost": [
+        0,
+        2,
+        0,
+        2,
+        3
+      ],
+      "av": 1,
+      "id": "custom-1792885766087-u7kxv",
+      "customId": "custom-1792885766087-u7kxv",
+      "time": false
+    },
+    {
+      "name": "Red Skull",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 3,
+      "bonus": 2,
+      "cost": [
+        0,
+        0,
+        0,
+        0,
+        6
+      ],
+      "av": 0,
+      "id": "custom-1792885791418-5bmzq",
+      "customId": "custom-1792885791418-5bmzq",
+      "time": false
+    },
+    {
+      "name": "L'Homme Sable",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 1,
+      "bonus": 0,
+      "cost": [
+        0,
+        0,
+        0,
+        0,
+        4
+      ],
+      "av": 0,
+      "id": "custom-1792885998645-vhq93",
+      "customId": "custom-1792885998645-vhq93",
+      "time": false
+    },
+    {
+      "name": "Le Caid",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 4,
+      "cost": [
+        0,
+        0,
+        1,
+        2,
+        0
+      ],
+      "av": 0,
+      "id": "custom-1792886178989-jp3dy",
+      "customId": "custom-1792886178989-jp3dy",
+      "time": false
+    },
+    {
+      "name": "Destroyer",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 1,
+      "bonus": 3,
+      "cost": [
+        0,
+        4,
+        0,
+        0,
+        0
+      ],
+      "av": 0,
+      "id": "custom-1792886274231-mya90",
+      "customId": "custom-1792886274231-mya90",
+      "time": false
+    },
+    {
+      "name": "Spider Woman",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 2,
+      "cost": [
+        3,
+        1,
+        1,
+        0,
+        0
+      ],
+      "av": 1,
+      "id": "custom-1792886301929-1fun8",
+      "customId": "custom-1792886301929-1fun8",
+      "time": false
+    },
+    {
+      "name": "Tchalla Boy",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 2,
+      "cost": [
+        2,
+        0,
+        0,
+        2,
+        1
+      ],
+      "av": 1,
+      "id": "custom-1792886344431-uwzmh",
+      "customId": "custom-1792886344431-uwzmh",
+      "time": false
+    },
+    {
+      "name": "Spider Pig",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 4,
+      "cost": [
+        0,
+        0,
+        1,
+        2,
+        0
+      ],
+      "av": 0,
+      "id": "custom-1792886382181-8qfd1",
+      "customId": "custom-1792886382181-8qfd1",
+      "time": false
+    },
+    {
+      "name": "Yondu",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 1,
+      "bonus": 4,
+      "cost": [
+        0,
+        0,
+        0,
+        4,
+        0
+      ],
+      "av": 0,
+      "id": "custom-1792886406109-nn7gh",
+      "customId": "custom-1792886406109-nn7gh",
+      "time": false
+    },
+    {
+      "name": "Abomination",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 3,
+      "cost": [
+        1,
+        2,
+        0,
+        1,
+        1
+      ],
+      "av": 0,
+      "id": "custom-1792886467531-8o2q9",
+      "customId": "custom-1792886467531-8o2q9",
+      "time": false
+    },
+    {
+      "name": "Spiderman Venom",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 3,
+      "cost": [
+        1,
+        3,
+        1,
+        0,
+        0
+      ],
+      "av": 1,
+      "id": "custom-1792886513707-u5592",
+      "customId": "custom-1792886513707-u5592",
+      "time": false
+    },
+    {
+      "name": "Electro",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 0,
+      "cost": [
+        1,
+        0,
+        0,
+        0,
+        2
+      ],
+      "av": 0,
+      "id": "custom-1792886534109-q8501",
+      "customId": "custom-1792886534109-q8501",
+      "time": false
+    },
+    {
+      "name": "Iceman",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 4,
+      "cost": [
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "av": 0,
+      "id": "custom-1792886670251-vcnqg",
+      "customId": "custom-1792886670251-vcnqg",
+      "time": false
+    },
+    {
+      "name": "Rhino",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 3,
+      "cost": [
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "av": 0,
+      "id": "custom-1792886712525-y90iv",
+      "customId": "custom-1792886712525-y90iv",
+      "time": false
+    },
+    {
+      "name": "Gambit",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 0,
+      "cost": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "av": 0,
+      "id": "custom-1792886765101-u5vnb",
+      "customId": "custom-1792886765101-u5vnb",
+      "time": false
+    },
+    {
+      "name": "La Fauve",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 0,
+      "cost": [
+        0,
+        1,
+        0,
+        1,
+        3
+      ],
+      "av": 1,
+      "id": "custom-1792886813375-kuk8s",
+      "customId": "custom-1792886813375-kuk8s",
+      "time": false
+    },
+    {
+      "name": "Taskmaster",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 1,
+      "cost": [
+        0,
+        0,
+        4,
+        0,
+        0
+      ],
+      "av": 0,
+      "id": "custom-1792886834643-2ag48",
+      "customId": "custom-1792886834643-2ag48",
+      "time": false
+    },
+    {
+      "name": "Le Vautour",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 2,
+      "cost": [
+        4,
+        0,
+        0,
+        0,
+        0
+      ],
+      "av": 0,
+      "id": "custom-1792886908039-a927y",
+      "customId": "custom-1792886908039-a927y",
+      "time": false
+    }
+  ],
+  "edits": {
+    "Rocket": {
+      "name": "Rocket",
+      "comic": "Les gardiens",
+      "description": "Rocket Raccoon est un raton laveur génétiquement et cybernétiquement modifié, membre et leader des Gardiens de la Galaxie",
+      "tier": 1,
+      "points": 0,
+      "bonus": 2,
+      "cost": [
+        2,
+        0,
+        1,
+        0,
+        0
+      ],
+      "av": 0
+    },
+    "Colossus": {
+      "name": "Colossus",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 2,
+      "cost": [
+        3,
+        0,
+        0,
+        0,
+        0
+      ],
+      "av": 0
+    },
+    "Hulk": {
+      "name": "Hulk",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 3,
+      "bonus": 3,
+      "cost": [
+        3,
+        3,
+        0,
+        3,
+        5
+      ],
+      "av": 1
+    },
+    "Captain America": {
+      "name": "Captain America",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 3,
+      "bonus": 4,
+      "cost": [
+        0,
+        3,
+        5,
+        3,
+        3
+      ],
+      "av": 2
+    },
+    "Iron Fist": {
+      "name": "Iron Fist",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 4,
+      "bonus": 1,
+      "cost": [
+        0,
+        7,
+        0,
+        0,
+        0
+      ],
+      "av": 0
+    },
+    "Nova": {
+      "name": "Nova",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 4,
+      "bonus": 0,
+      "cost": [
+        3,
+        0,
+        0,
+        6,
+        3
+      ],
+      "av": 0
+    },
+    "Doctor Strange": {
+      "name": "Doctor Strange",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 4,
+      "bonus": 0,
+      "cost": [
+        0,
+        0,
+        0,
+        7,
+        0
+      ],
+      "av": 1
+    },
+    "Loki": {
+      "name": "Loki",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 5,
+      "bonus": 0,
+      "cost": [
+        0,
+        3,
+        0,
+        7,
+        0
+      ],
+      "av": 0
+    },
+    "Gamora": {
+      "name": "Gamora",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 5,
+      "bonus": 1,
+      "cost": [
+        7,
+        0,
+        0,
+        0,
+        3
+      ],
+      "av": 0
+    },
+    "Black Bolt": {
+      "name": "Black Bolt",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 4,
+      "bonus": 4,
+      "cost": [
+        0,
+        0,
+        7,
+        0,
+        0
+      ],
+      "av": 0
+    },
+    "Black Widow": {
+      "name": "Black Widow",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 3,
+      "bonus": 1,
+      "cost": [
+        5,
+        3,
+        3,
+        3,
+        0
+      ],
+      "av": 2
+    },
+    "Iron Man": {
+      "name": "Iron Man",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 3,
+      "bonus": 2,
+      "cost": [
+        3,
+        5,
+        3,
+        0,
+        3
+      ],
+      "av": 2
+    },
+    "Doctor Doom": {
+      "name": "Doctor Doom",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 5,
+      "bonus": 2,
+      "cost": [
+        0,
+        7,
+        0,
+        3,
+        0
+      ],
+      "av": 0
+    },
+    "Dormammu": {
+      "name": "Dormammu",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 4,
+      "bonus": 3,
+      "cost": [
+        0,
+        0,
+        0,
+        0,
+        7
+      ],
+      "av": 0
+    },
+    "Black Panther": {
+      "name": "Black Panther",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 4,
+      "bonus": 4,
+      "cost": [
+        0,
+        0,
+        6,
+        3,
+        3
+      ],
+      "av": 1
+    },
+    "Ant-Man": {
+      "name": "Ant-Man",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 4,
+      "bonus": 1,
+      "cost": [
+        6,
+        0,
+        3,
+        0,
+        3
+      ],
+      "av": 1
+    },
+    "Mister Fantastic": {
+      "name": "Mister Fantastic",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 4,
+      "bonus": 2,
+      "cost": [
+        3,
+        6,
+        3,
+        0,
+        0
+      ],
+      "av": 1
+    },
+    "Thor": {
+      "name": "Thor",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 3,
+      "bonus": 0,
+      "cost": [
+        3,
+        3,
+        3,
+        5,
+        0
+      ],
+      "av": 2
+    },
+    "Spider-Man": {
+      "name": "Spider-Man",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 5,
+      "bonus": 4,
+      "cost": [
+        3,
+        0,
+        7,
+        0,
+        0
+      ],
+      "av": 1
+    },
+    "Captain Marvel": {
+      "name": "Captain Marvel",
+      "comic": "",
+      "description": "",
+      "tier": 3,
+      "points": 4,
+      "bonus": 3,
+      "cost": [
+        0,
+        3,
+        0,
+        3,
+        6
+      ],
+      "av": 1
+    },
+    "Quicksilver": {
+      "name": "Quicksilver",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 1,
+      "bonus": 1,
+      "cost": [
+        3,
+        0,
+        2,
+        3,
+        0
+      ],
+      "av": 1
+    },
+    "Kang": {
+      "name": "Kang",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 2,
+      "bonus": 3,
+      "cost": [
+        0,
+        2,
+        4,
+        0,
+        1
+      ],
+      "av": 0
+    },
+    "Falcon": {
+      "name": "Falcon",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 1,
+      "bonus": 4,
+      "cost": [
+        3,
+        0,
+        3,
+        2,
+        0
+      ],
+      "av": 1
+    },
+    "Okoye": {
+      "name": "Okoye",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 1,
+      "bonus": 3,
+      "cost": [
+        0,
+        2,
+        4,
+        3,
+        0
+      ],
+      "av": 1
+    },
+    "Daredevil": {
+      "name": "Daredevil",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 3,
+      "bonus": 4,
+      "cost": [
+        6,
+        0,
+        0,
+        0,
+        0
+      ],
+      "av": 0
+    },
+    "Spider-Gwen": {
+      "name": "Spider-Gwen",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 2,
+      "bonus": 1,
+      "cost": [
+        0,
+        2,
+        0,
+        4,
+        1
+      ],
+      "av": 0
+    },
+    "Jessica Jones": {
+      "name": "Jessica Jones",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 3,
+      "bonus": 3,
+      "cost": [
+        0,
+        1,
+        6,
+        0,
+        0
+      ],
+      "av": 0
+    },
+    "Venom": {
+      "name": "Venom",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 2,
+      "bonus": 0,
+      "cost": [
+        0,
+        5,
+        0,
+        0,
+        0
+      ],
+      "av": 0
+    },
+    "Nick Fury": {
+      "name": "Nick Fury",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 1,
+      "bonus": 3,
+      "cost": [
+        3,
+        0,
+        0,
+        2,
+        2
+      ],
+      "av": 1
+    },
+    "Miles Morales": {
+      "name": "Miles Morales",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 2,
+      "bonus": 1,
+      "cost": [
+        0,
+        0,
+        0,
+        5,
+        0
+      ],
+      "av": 0
+    },
+    "Deadpool": {
+      "name": "Deadpool",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 2,
+      "bonus": 2,
+      "cost": [
+        0,
+        0,
+        3,
+        0,
+        5
+      ],
+      "av": 0
+    },
+    "Nebula": {
+      "name": "Nebula",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 3,
+      "bonus": 1,
+      "cost": [
+        0,
+        0,
+        0,
+        6,
+        0
+      ],
+      "av": 0
+    },
+    "Hela": {
+      "name": "Hela",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 3,
+      "bonus": 0,
+      "cost": [
+        0,
+        6,
+        0,
+        0,
+        0
+      ],
+      "av": 0
+    },
+    "War Machine": {
+      "name": "War Machine",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 1,
+      "bonus": 1,
+      "cost": [
+        0,
+        2,
+        0,
+        3,
+        2
+      ],
+      "av": 1
+    },
+    "Scarlet Witch": {
+      "name": "Scarlet Witch",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 1,
+      "bonus": 0,
+      "cost": [
+        2,
+        3,
+        2,
+        0,
+        1
+      ],
+      "av": 1
+    },
+    "Ghost Rider": {
+      "name": "Ghost Rider",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 2,
+      "bonus": 0,
+      "cost": [
+        0,
+        4,
+        2,
+        1,
+        0
+      ],
+      "av": 1
+    },
+    "Groot": {
+      "name": "Groot",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 2,
+      "bonus": 4,
+      "cost": [
+        5,
+        0,
+        0,
+        3,
+        0
+      ],
+      "av": 0
+    },
+    "Shuri": {
+      "name": "Shuri",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 1,
+      "bonus": 2,
+      "cost": [
+        0,
+        2,
+        3,
+        0,
+        2
+      ],
+      "av": 0
+    },
+    "Invisible Woman": {
+      "name": "Invisible Woman",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 2,
+      "bonus": 4,
+      "cost": [
+        0,
+        5,
+        0,
+        0,
+        3
+      ],
+      "av": 0
+    },
+    "Ultron": {
+      "name": "Ultron",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 0,
+      "cost": [
+        1,
+        0,
+        1,
+        0,
+        1
+      ],
+      "av": 0
+    },
+    "Professor X": {
+      "name": "Professor X",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 2,
+      "cost": [
+        2,
+        0,
+        0,
+        3,
+        2
+      ],
+      "av": 0
+    },
+    "Psylocke": {
+      "name": "Psylocke",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 2,
+      "cost": [
+        2,
+        1,
+        0,
+        1,
+        1
+      ],
+      "av": 0
+    },
+    "Luke Cage": {
+      "name": "Luke Cage",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 2,
+      "cost": [
+        1,
+        2,
+        1,
+        1,
+        0
+      ],
+      "av": 0
+    },
+    "Cyclops": {
+      "name": "Cyclops",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 0,
+      "cost": [
+        0,
+        0,
+        0,
+        0,
+        3
+      ],
+      "av": 0
+    },
+    "Nightcrawler": {
+      "name": "Dent de Sabre",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 4,
+      "cost": [
+        0,
+        0,
+        0,
+        3,
+        0
+      ],
+      "av": 0
+    },
+    "The Thing": {
+      "name": "The Thing",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 3,
+      "cost": [
+        0,
+        2,
+        2,
+        0,
+        0
+      ],
+      "av": 0
+    },
+    "Winter Soldier": {
+      "name": "Winter Soldier",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 3,
+      "cost": [
+        2,
+        2,
+        0,
+        0,
+        1
+      ],
+      "av": 1
+    },
+    "Wasp": {
+      "name": "Wasp",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 1,
+      "cost": [
+        0,
+        1,
+        2,
+        0,
+        2
+      ],
+      "av": 1
+    },
+    "Hawkeye": {
+      "name": "Hawkeye",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 0,
+      "cost": [
+        0,
+        2,
+        1,
+        2,
+        0
+      ],
+      "av": 1
+    },
+    "Moon Knight": {
+      "name": "Moon Knight",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 3,
+      "cost": [
+        0,
+        0,
+        3,
+        0,
+        0
+      ],
+      "av": 0
+    },
+    "Blade": {
+      "name": "Blade",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 1,
+      "cost": [
+        0,
+        0,
+        2,
+        2,
+        0
+      ],
+      "av": 0
+    },
+    "Mantis": {
+      "name": "Mantis",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 1,
+      "cost": [
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "av": 0
+    },
+    "Human Torch": {
+      "name": "Human Torch",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 1,
+      "cost": [
+        1,
+        1,
+        0,
+        3,
+        0
+      ],
+      "av": 1
+    },
+    "Silver Surfer": {
+      "name": "Silver Surfer",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 3,
+      "cost": [
+        0,
+        2,
+        0,
+        1,
+        0
+      ],
+      "av": 0
+    },
+    "Magneto": {
+      "name": "Magneto",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 3,
+      "cost": [
+        0,
+        3,
+        0,
+        0,
+        0
+      ],
+      "av": 0
+    },
+    "Wong": {
+      "name": "Wong",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 0,
+      "cost": [
+        1,
+        1,
+        1,
+        0,
+        2
+      ],
+      "av": 0
+    },
+    "Wolverine": {
+      "name": "Wolverine",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 0,
+      "cost": [
+        1,
+        0,
+        2,
+        0,
+        2
+      ],
+      "av": 1
+    },
+    "Storm": {
+      "name": "Storm",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 1,
+      "cost": [
+        2,
+        1,
+        0,
+        1,
+        1
+      ],
+      "av": 0
+    },
+    "Valkyrie": {
+      "name": "Jane Foster",
+      "comic": "",
+      "description": "",
+      "tier": 1,
+      "points": 0,
+      "bonus": 1,
+      "cost": [
+        0,
+        0,
+        3,
+        1,
+        1
+      ],
+      "av": 1
+    },
+    "Star-Lord": {
+      "name": "Star-Lord",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 2,
+      "bonus": 4,
+      "cost": [
+        4,
+        1,
+        0,
+        0,
+        2
+      ],
+      "av": 0
+    },
+    "She-Hulk": {
+      "name": "She-Hulk",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 0,
+      "bonus": 3,
+      "cost": [
+        0,
+        0,
+        3,
+        2,
+        2
+      ],
+      "av": 1
+    },
+    "Heimdall": {
+      "name": "Heimdall",
+      "comic": "",
+      "description": "",
+      "tier": 2,
+      "points": 0,
+      "bonus": 0,
+      "cost": [
+        3,
+        3,
+        0,
+        0,
+        2
+      ],
+      "av": 1
+    }
+  },
+  "deleted": [
+    "America Chavez",
+    "Adam Warlock",
+    "Dagger",
+    "Ikaris",
+    "Riri Williams",
+    "Ancient One",
+    "Cloak",
+    "Elektra",
+    "Kate Bishop",
+    "Namor",
+    "Monica Rambeau",
+    "Odin",
+    "Polaris",
+    "Rogue",
+    "Sersi",
+    "Wonder Man",
+    "Yelena",
+    "Jean Grey",
+    "Ms. Marvel"
+  ]
+}
