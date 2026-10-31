@@ -9,5 +9,9 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "socket.io": "^4.8.1",
+    "pg": "^8.13.1"
   }
 }

@@ -1,0 +1,28 @@
+CORRECTIF UNO PARTY POUR TON PORTAIL (WINDOWS)
+============================================
+
+Ce petit ZIP corrige l'installateur de UNO Party V3 deja copie dans
+mon-portail-jeux. Il a ete adapte au fichier server.js que tu as fourni.
+
+1. Sur ton ordinateur, ouvre l'Explorateur de fichiers.
+2. Ouvre C:\Users\Yann\Documents\GitHub\mon-portail-jeux
+3. Ouvre le ZIP CORRECTIF_UNO et glisse SON CONTENU dans ce dossier.
+   Les deux elements a copier sont :
+     - scripts (dossier contenant installer-uno.js)
+     - INSTALLER_UNO_WINDOWS.bat
+   Quand Windows demande de remplacer installer-uno.js, accepte.
+   Ne remplace pas les dossiers complets : fusionne-les.
+4. Dans mon-portail-jeux, double-clique INSTALLER_UNO_WINDOWS.bat.
+5. Attends que la fenetre affiche INSTALLATION LOCALE TERMINEE.
+6. Si tu vois une erreur, envoie une photo de la fenetre ChatGPT.
+7. Ensuite, les modifications devront etre publiees depuis GitHub Desktop
+   et deployee(s) sur Render. Le correctif ne fait pas cette publication.
+
+ATTENTION : le ZIP original UNO Party V3 doit deja avoir ete decompresse
+et copie dans mon-portail-jeux. Ce correctif ne contient pas le jeu entier.
+
+Si tu preferes la commande deja connue, copie les fichiers ci-dessus puis
+lance uniquement : node scripts/installer-uno.js
+
+Ne supprime aucun ancien jeu et ne remplace pas le server.js avec celui d'un
+autre projet. L'installateur ne change que les routes UNO et la configuration.

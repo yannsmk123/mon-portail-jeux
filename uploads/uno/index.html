@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#131327">
+  <meta name="description" content="UNO Party : jeu de cartes multijoueur gratuit, jusqu'à 4 joueurs. Invite tes amis ou défie les bots !">
+  <title>UNO Party — Le jeu de cartes entre amis</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="/socket.io/socket.io.js"></script>
+  <script defer src="./media-loader.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <div class="backdrop-art" aria-hidden="true"><span class="blob blob-a"></span><span class="blob blob-b"></span><span class="blob blob-c"></span></div>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Accueil UNO Party"><span class="brand-mark">U</span><span>UNO<span class="brand-accent">PARTY</span></span></a>
+    <div class="topbar-actions">
+      <span id="connection" class="connection"><span class="connection-dot"></span><span>Connexion…</span></span>
+      <button id="soundBtn" class="icon-btn" aria-label="Activer ou couper les sons" title="Son">🔊</button>
+      <a id="portalHome" class="portal-home" href="/">🏠 Accueil du portail</a>
+      <button id="settingsBtn" class="icon-btn" title="Paramètres" aria-label="Paramètres">⚙️</button>
+      <button id="helpBtn" class="icon-btn" aria-label="Voir les règles" title="Règles">?</button>
+    </div>
+  </header>
+
+  <main id="welcome" class="welcome-screen screen">
+    <section class="hero">
+      <div class="hero-visual" aria-hidden="true">
+        <div class="hero-card hero-red"><span>7</span></div>
+        <div class="hero-card hero-yellow"><span>+2</span></div>
+        <div class="hero-card hero-blue"><span>↺</span></div>
+        <div class="hero-card hero-wild"><span>★</span></div>
+        <span class="spark spark-one">✦</span><span class="spark spark-two">✧</span><span class="spark spark-three">✦</span>
+      </div>
+      <div class="hero-copy">
+        <span class="eyebrow"><span class="eyebrow-dot"></span> TON NOUVEAU JEU DE SOIRÉE</span>
+        <h1>Prêt à mettre<br><span>le feu aux cartes ?</span></h1>
+        <p>Des cartes, des rebondissements et de gros fous rires. Défie tes amis ou les bots dans une partie haute en couleur !</p>
+        <div class="feature-pills"><span>🎮 1 à 4 joueurs</span><span>⚡ Parties rapides</span><span>📱 Mobile & PC</span></div>
+      </div>
+    </section>
+    <section class="entry-panel">
+      <div class="entry-heading"><div><span class="mini-label">ENTRE DANS LA PARTIE</span><h2>C'est parti ! <span>🎉</span></h2></div><span class="entry-star">✳</span></div>
+      <label for="playerName">Ton pseudo</label>
+      <input id="playerName" autocomplete="nickname" maxlength="18" placeholder="Ex. SuperNova" aria-label="Ton pseudo">
+      <div class="entry-buttons">
+        <button id="createBtn" class="btn btn-primary"><span>✨</span> Créer un salon</button>
+        <button id="soloBtn" class="btn btn-secondary"><span>🤖</span> Jouer contre des bots</button>
+      </div>
+      <div class="entry-divider"><span>OU REJOINS TES AMIS</span></div>
+      <div class="join-row"><input id="joinCode" maxlength="6" placeholder="CODE DU SALON" aria-label="Code du salon" autocapitalize="characters"><button id="joinBtn" class="btn btn-dark">Rejoindre <span>→</span></button></div>
+      <p class="entry-footnote">Gratuit, sans compte et sans téléchargement. ✨</p>
+    </section>
+  </main>
+
+  <main id="lobby" class="screen lobby-screen hidden">
+    <div class="lobby-wrap">
+      <div class="lobby-intro"><span class="eyebrow">🎊 SALON PRIVÉ</span><h1>Rassemble ta <span>dream team !</span></h1><p>Envoie le code à tes amis pour les faire entrer dans la partie.</p></div>
+      <section class="lobby-card">
+        <div class="room-header"><span class="mini-label">CODE D'INVITATION</span><span class="status-pill"><i></i> Salon ouvert</span></div>
+        <div class="room-share"><strong id="lobbyCode">------</strong><button id="copyBtn" class="btn btn-copy">📋 Copier le lien</button></div>
+        <div class="lobby-line"></div>
+        <div class="lobby-sub"><h2>Les joueurs <span id="playerAmount">1 / 4</span></h2><span class="lobby-dots">● ● ●</span></div>
+        <div id="lobbyPlayers" class="lobby-players"></div>
+        <div class="bot-config" id="botConfig"><div><strong>🤖 Ajouter des bots</strong><small>Parfait si vous êtes moins de 4</small></div><select id="botSelect" aria-label="Nombre de bots"></select></div>
+        <button id="startBtn" class="btn btn-primary btn-full">🚀 Lancer la partie</button>
+        <p id="lobbyHint" class="helper-text">Invite un ami ou ajoute un bot pour commencer.</p>
+      </section>
+      <button id="leaveLobbyBtn" class="text-btn">← Quitter le salon</button>
+    </div>
+  </main>
+
+  <main id="gameScreen" class="screen game-screen hidden">
+    <div class="game-header">
+      <div class="game-meta"><span class="game-tag">🎴 UNE PARTIE DE FOLIE</span><span class="game-room">SALON <strong id="gameCode">------</strong></span><button id="copyGameBtn" class="mini-copy" title="Copier le lien du salon">📋</button></div>
+      <div class="game-tools"><span id="gameDirection" class="direction-pill">↻ Sens horaire</span><button id="leaveGameBtn" class="text-btn leave-game">Quitter</button></div>
+    </div>
+    <div class="game-arena">
+      <div id="opponents" class="opponents"></div>
+      <div class="game-table">
+        <div class="table-glow"></div><div class="table-inner">
+          <div id="turnBanner" class="turn-banner">À qui le tour ?</div>
+          <div class="table-piles">
+            <div class="pile-wrap"><button id="drawPile" class="deck-card" title="Piocher une carte" aria-label="Piocher une carte"><span class="deck-logo">UNO<br>PARTY</span></button><span class="pile-label">PIOCHE <small id="deckCount">0</small></span></div>
+            <span class="pile-arrow" aria-hidden="true">➜</span>
+            <div class="pile-wrap"><div id="discardCard" class="discard-slot"></div><span class="pile-label">CARTE JOUÉE</span></div>
+          </div>
+          <div id="colorStatus" class="color-status"><span class="color-dot"></span> Couleur active : <strong>ROUGE</strong></div>
+        </div>
+      </div>
+      <div class="bottom-zone">
+        <div class="hand-toolbar">
+          <div class="my-info"><div id="myAvatar" class="my-avatar">🦊</div><div><span class="mini-label">TA MAIN</span><strong id="myName">Joueur</strong><small id="handCount">7 cartes</small></div></div>
+          <div class="actions"><button id="catchBtn" class="btn btn-catch hidden">👀 Contre-UNO !</button><button id="unoBtn" class="btn btn-uno hidden">📢 UNO !</button><button id="passBtn" class="btn btn-pass hidden">Passer mon tour →</button><span id="turnHint" class="turn-hint">Patiente, ton tour arrive !</span></div>
+        </div>
+        <div id="hand" class="hand" role="group" aria-label="Tes cartes"></div>
+      </div>
+    </div>
+    <div id="lastEvent" class="last-event" aria-live="polite">Que la meilleure main gagne ! 🎉</div>
+  </main>
+
+  <div id="colorModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Choisir une couleur">
+    <div class="modal-card color-modal"><span class="modal-emoji">🌈</span><h2>Choisis ta couleur !</h2><p>Quelle couleur vas-tu imposer ?</p><div class="color-grid"><button class="color-choice red" data-color="red">Rouge</button><button class="color-choice yellow" data-color="yellow">Jaune</button><button class="color-choice green" data-color="green">Vert</button><button class="color-choice blue" data-color="blue">Bleu</button></div><button id="cancelColor" class="text-btn">Annuler</button></div>
+  </div>
+  <div id="winModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Résultat de la partie"><div class="confetti" id="confetti"></div><div class="modal-card win-modal"><span class="win-cup">🏆</span><div class="eyebrow">PARTIE TERMINÉE !</div><h2 id="winTitle">Bravo !</h2><p id="winText">Quelle partie !</p><button id="rematchBtn" class="btn btn-primary btn-full">🔄 Rejouer ensemble</button><button id="winLeaveBtn" class="text-btn">Retour à l'accueil</button></div></div>
+  <div id="rulesModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Règles du jeu"><div class="modal-card rules-modal"><button id="closeRules" class="close-btn" aria-label="Fermer">✕</button><span class="modal-emoji">📚</span><h2>Les règles en 30 secondes</h2><p>Le but : être le premier à ne plus avoir de cartes !</p><div class="rule-list"><p>🎯 <strong>Joue une carte</strong> de la même couleur ou du même symbole que la défausse.</p><p>🃏 <strong>Pioche une carte</strong> si tu ne peux pas jouer. Si elle convient, tu peux la jouer ou passer.</p><p>⚡ <strong>Cartes spéciales :</strong> +2, +4, inversion du sens, passe-tour et joker de couleur.</p><p>📢 <strong>Crie UNO !</strong> lorsqu'il te reste une carte. Si un adversaire te prend en faute avant le prochain coup, tu pioches deux cartes.</p><p>🛑 <strong>Pas de cumul des +2/+4.</strong> Un +4 se joue seulement sans carte de la couleur active. À deux joueurs, inversion = passe-tour.</p></div><button id="gotRules" class="btn btn-primary btn-full">Compris, on joue !</button></div></div>
+  <div id="settingsModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Paramètres et personnalisation">
+    <div class="modal-card settings-modal">
+      <button id="closeSettings" class="close-btn" aria-label="Fermer">✕</button>
+      <h2>⚙️ Mon espace de jeu</h2>
+      <p>Personnalise ton ambiance sans modifier la partie multijoueur.</p>
+      <section class="settings-section">
+        <h3>🔊 Ambiance sonore</h3>
+        <label class="settings-line"><span>Effets sonores</span><input id="sfxEnabled" type="checkbox" checked></label>
+        <label class="settings-line"><span>Volume effets <output id="sfxVolumeValue">60 %</output></span><input id="sfxVolume" type="range" min="0" max="100" value="60"></label>
+        <label class="settings-line"><span>Musique</span><input id="musicEnabled" type="checkbox"></label>
+        <label class="settings-line"><span>Volume musique <output id="musicVolumeValue">25 %</output></span><input id="musicVolume" type="range" min="0" max="100" value="25"></label>
+        <label class="settings-line"><span>Lecture aléatoire</span><input id="musicShuffle" type="checkbox"></label>
+        <label class="settings-line"><span>Lecture en boucle</span><input id="musicLoop" type="checkbox" checked></label>
+        <div class="settings-actions"><button id="nextMusic" class="btn btn-secondary">♫ Musique suivante</button><span id="musicTrack">Playlist UNO Party</span></div>
+      </section>
+      <section class="settings-section">
+        <h3>✨ Animations</h3>
+        <label class="settings-line"><span>Activer les animations</span><input id="animationEnabled" type="checkbox" checked></label>
+        <label class="settings-line"><span>Intensité <output id="animationValue">100 %</output></span><input id="animationIntensity" type="range" min="0" max="150" value="100"></label>
+        <label class="settings-line"><span>Vitesse <output id="animationSpeedValue">100 %</output></span><input id="animationSpeed" type="range" min="50" max="200" value="100"></label>
+      </section>
+      <section class="settings-section">
+        <h3>🎨 Mes ressources personnalisées</h3>
+        <p>Choisis un élément du jeu, puis une image ou un son local. Les suppressions restent enregistrées jusqu'à restauration.</p>
+        <label for="mediaSlot">Élément à modifier</label>
+        <select id="mediaSlot"><option value="card-back">Dos des cartes</option><option value="table-background">Fond de la table</option><option value="sound-click">Son clic</option><option value="sound-draw">Son pioche</option><option value="sound-uno">Son UNO</option><option value="sound-win">Son victoire</option><option value="music-1">Musique principale</option></select>
+        <label for="customSlot">Ou ajouter un identifiant personnalisé (optionnel)</label>
+        <input id="customSlot" placeholder="ex. illustration-bonus" maxlength="60">
+        <label for="mediaFile">Importer une image / un son (max. 5 Mo)</label>
+        <input id="mediaFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,audio/mpeg,audio/ogg,audio/wav,audio/mp4">
+        <div class="settings-actions"><button id="saveMedia" class="btn btn-primary">Ajouter / remplacer</button><button id="deleteMedia" class="btn btn-secondary">Supprimer</button></div>
+        <p id="mediaStatus" role="status"></p>
+      </section>
+      <section class="settings-section">
+        <h3>💾 Sauvegarde des personnalisations</h3>
+        <div class="settings-actions"><button id="exportPrefs" class="btn btn-secondary">Exporter JSON</button><label class="file-btn">Importer JSON <input id="importPrefs" type="file" accept="application/json,.json" hidden></label><button id="restorePrefs" class="btn btn-secondary">Restaurer valeurs officielles</button></div>
+        <small>La configuration et les médias sont distincts de la progression de ta partie. Les salons actifs restent gérés par le serveur.</small>
+      </section>
+      <button id="openJsonTools" class="text-btn">🧩 Diagnostic JSON et cache</button>
+    </div>
+  </div>
+  <section id="jsonTools" class="json-tools hidden" aria-live="polite"><h3>🧩 Ressources JSON</h3><p id="jsonStatus">Vérification du manifeste…</p><div class="settings-actions"><button id="checkJson" class="btn btn-secondary">Vérifier le JSON</button><button id="resetJson" class="btn btn-secondary">Restaurer les données du JSON</button><label class="file-btn">Choisir un JSON <input id="chooseJson" type="file" accept=".json,application/json" hidden></label><button id="hideJsonTools" class="btn btn-secondary">Masquer</button></div></section>
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  <footer id="footer" class="footer">Un jeu de cartes inspiré du principe d'UNO. Projet indépendant, non affilié à Mattel.</footer>
+</body>
+</html>

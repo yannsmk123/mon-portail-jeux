@@ -16,5 +16,14 @@
     "accent": "#75c8fa",
     "multiplayer": true,
     "featured": true
+  },
+  "uno": {
+    "title": "UNO PARTY 🎉",
+    "description": "Défie tes amis jusqu’à 4 joueurs, ou affronte des bots !",
+    "category": "Cartes & stratégie",
+    "icon": "🃏",
+    "accent": "#ff6b4a",
+    "multiplayer": true,
+    "featured": true
   }
 }

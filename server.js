@@ -397,7 +397,13 @@ const server=http.createServer(async (req,res)=>{
     if(pn==='/games/splendor'){res.writeHead(302,{Location:'/games/splendor/'+url.search,'Cache-Control':'no-store'});return res.end();}
     return serveSplendor(req,res,pn.slice('/games/splendor/'.length));
    }
-   if(req.method==='GET'&&pn.startsWith('/games/')){
+   // UNO PARTY V3 — début route statique isolée
+if((req.method==='GET'||req.method==='HEAD')&&(pn==='/games/uno'||pn.startsWith('/games/uno/'))){
+  return require('./uno-server/static').serveUnoStatic(req,res,pn);
+}
+// UNO PARTY V3 — fin route statique isolée
+
+if(req.method==='GET'&&pn.startsWith('/games/')){
      const segments=pn.slice('/games/'.length).split('/');
      const id=segments.shift(),game=catalog.get(id);
      if(!game)return respond(res,404,'Jeu introuvable.','text/plain; charset=utf-8');
@@ -417,11 +423,12 @@ const server=http.createServer(async (req,res)=>{
    return respond(res,404,'Page introuvable.','text/plain; charset=utf-8');
  }catch(e){console.error('Erreur portail:',e.message);if(!res.headersSent)json(res,e.status||((e.message.includes('volumineux')||e.message.includes('dépasse 20 Mo'))?413:400),{error:e.message||'Erreur du serveur.'})}
 });
-if(require.main===module)server.listen(PORT,'0.0.0.0',()=>{
+if(require.main===module)require('./uno-server/native').installUnoNative(server,userAllowed).then(()=>server.listen(PORT,'0.0.0.0',()=>{
  console.log(`\n🎮 PORTAIL DE JEUX — http://localhost:${PORT}`);
  console.log(`   ${catalog.size} jeu(x) disponibles. MARVEL FUSION : /games/marvel-fusion/`);
  console.log(`   Déploiement Render : HTTPS public, sans redirection de port.`);
  console.log(`   Ajout direct depuis le portail : ${adminConfigured()?'activé':'optionnel, non configuré'}`);
  if(errors.length)console.warn('Jeux ignorés :',errors.join('; '));
-});
+})).catch(err=>{console.error('[UNO] Erreur de démarrage :',err);process.exitCode=1;});
+
 module.exports={server,catalog,discoverGames,metadata,adminConfigured};

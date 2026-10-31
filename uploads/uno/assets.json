@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "version": "1.0.0",
+  "description": "UNO Party pour MY GAME ARCADE. Manifeste leger, packs verifies SHA-256, cache IndexedDB.",
+  "config": {
+    "defaults": {
+      "sfxEnabled": true,
+      "sfxVolume": 60,
+      "musicEnabled": false,
+      "musicVolume": 25,
+      "musicShuffle": false,
+      "musicLoop": true,
+      "animationEnabled": true,
+      "animationIntensity": 100,
+      "animationSpeed": 100
+    },
+    "animations": {
+      "cardPlay": "lift",
+      "victory": "confetti",
+      "speed": 1
+    },
+    "bindings": {
+      "card-back": "card-back",
+      "table-background": "table-background",
+      "sound-click": "sound-click",
+      "sound-draw": "sound-draw",
+      "sound-uno": "sound-uno",
+      "sound-win": "sound-win",
+      "music-1": "music-1"
+    },
+    "playlist": [
+      "music-1"
+    ]
+  },
+  "assetIndex": {
+    "card-back": "visuals",
+    "table-background": "visuals",
+    "sound-click": "sfx",
+    "sound-draw": "sfx",
+    "sound-uno": "sfx",
+    "sound-win": "sfx",
+    "music-1": "music"
+  },
+  "packs": [
+    {
+      "id": "visuals",
+      "version": "1.0.0",
+      "sha256": "c3f45055de3ebec4332c8014d8fbf0993fa67fd042b60b57b18647f84d05c4d8",
+      "bytes": 1972,
+      "parts": [
+        {
+          "path": "packs/visuals.part-01.txt",
+          "sha256": "c3f45055de3ebec4332c8014d8fbf0993fa67fd042b60b57b18647f84d05c4d8",
+          "bytes": 1972
+        }
+      ],
+      "lazy": false
+    },
+    {
+      "id": "sfx",
+      "version": "1.0.0",
+      "sha256": "0f90421a6de96826d70a2616fef6e46982d812eeb809d0fa16d200a9278de4fa",
+      "bytes": 26676,
+      "parts": [
+        {
+          "path": "packs/sfx.part-01.txt",
+          "sha256": "0f90421a6de96826d70a2616fef6e46982d812eeb809d0fa16d200a9278de4fa",
+          "bytes": 26676
+        }
+      ],
+      "lazy": true
+    },
+    {
+      "id": "music",
+      "version": "1.0.0",
+      "sha256": "eebd58e2b0cc3bdfbd58df5415ce8fe24ace87ad5418b44bf73454170a2815a0",
+      "bytes": 235362,
+      "parts": [
+        {
+          "path": "packs/music.part-01.txt",
+          "sha256": "368a43685f21ea16e7d84e8624b5e8f15deef310092364930fb691deef4f95cc",
+          "bytes": 55000
+        },
+        {
+          "path": "packs/music.part-02.txt",
+          "sha256": "b5ea88a4354b88ce49fc734e73d9ddda446da46046b419e57ca034c37e4ce2a5",
+          "bytes": 55000
+        },
+        {
+          "path": "packs/music.part-03.txt",
+          "sha256": "6d6e4035edb3735f6efa3af0cda47630935ae5249629021b616ee0b6e923e481",
+          "bytes": 55000
+        },
+        {
+          "path": "packs/music.part-04.txt",
+          "sha256": "7856b103d80117a3c3176901d125e91e013f48f540639c34cdf264a8519d3250",
+          "bytes": 55000
+        },
+        {
+          "path": "packs/music.part-05.txt",
+          "sha256": "a438aac65347bf741357440b0bbd0eb795cfae747c1482c098869648bcfc10d9",
+          "bytes": 15362
+        }
+      ],
+      "lazy": true
+    }
+  ]
+}
