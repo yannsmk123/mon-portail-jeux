@@ -1,7 +1,0 @@
-MARVEL SPLENDOR — VERSION OPTIMISÉE POUR MON PORTAIL JEUX
-
-Le jeu charge automatiquement marvel-splendor-assets.json et les fichiers dans medias/.
-Ne supprimez pas le dossier medias/ et ne deplacez pas les fichiers.
-Le fichier index.html est le jeu principal. Les identifiants des 128 ressources sont conservés.
-Vos fichiers originaux sont inchangés : sauvegardez le ZIP original en lieu sûr.
-Sur le portail, publier ce ZIP dans uploads/marvel-splendor/marvel-splendor.zip.
