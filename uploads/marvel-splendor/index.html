@@ -5821,6 +5821,47 @@ const byId=id=>document.getElementById(id);
 const engine=()=>window.GemEngine;
 const networkButton=document.createElement('button');networkButton.className='btn';networkButton.type='button';networkButton.id='v849NetworkButton';networkButton.textContent='🌐 Réseau';networkButton.title='Créer ou rejoindre une partie à deux';
 const settingsButton=byId('settingsBtn');if(settingsButton)settingsButton.before(networkButton);
+// Bouton « Accueil du portail » : ne modifie ni le réseau ni le jeu.
+// GitHub Pages et le portail Render ont deux origines différentes.
+const portalHomeButton=document.createElement('button');
+portalHomeButton.type='button';
+portalHomeButton.className='btn';
+portalHomeButton.id='marvelPortalHomeButton';
+portalHomeButton.textContent='🏠 Accueil du portail';
+portalHomeButton.title='Retourner à la page d’accueil de Mon Portail';
+networkButton.after(portalHomeButton);
+const portalHomeKey='marvel_splendor_portal_home_v1';
+function normalizePortalHome(value){
+ try{
+  const url=new URL(String(value||'').trim());
+  return ['https:','http:'].includes(url.protocol)&&url.hostname ? url.origin+'/' : '';
+ }catch(_){return '';}
+}
+function getPortalHome(){
+ const urlParam=new URLSearchParams(location.search).get('portal-home');
+ const specified=normalizePortalHome(urlParam);
+ if(specified){try{localStorage.setItem(portalHomeKey,specified);}catch(_){}return specified;}
+ // Le navigateur transmet normalement l'origine du portail lorsqu'on lance le jeu depuis celui-ci.
+ try{
+  const ref=new URL(document.referrer);
+  const fromPortal=ref.origin!==location.origin &&
+   (/(^|\.)onrender\.com$/i.test(ref.hostname) || /mon-portail-jeux/i.test(ref.hostname));
+  if(fromPortal){const home=ref.origin+'/';try{localStorage.setItem(portalHomeKey,home);}catch(_){}return home;}
+ }catch(_){}
+ try{return normalizePortalHome(localStorage.getItem(portalHomeKey));}catch(_){return '';}
+}
+portalHomeButton.addEventListener('click',()=>{
+ let destination=getPortalHome();
+ if(!destination){
+  const supplied=window.prompt('Adresse de la page d’accueil de ton portail (à indiquer une seule fois) :','');
+  if(supplied===null)return;
+  destination=normalizePortalHome(supplied);
+  if(!destination){window.alert('Adresse invalide : indique une adresse commençant par https://');return;}
+  try{localStorage.setItem(portalHomeKey,destination);}catch(_){}
+ }
+ window.location.assign(destination);
+});
+
 const badge=document.createElement('div');badge.id='v849NetworkBadge';badge.setAttribute('role','status');badge.textContent='🌐 Partie réseau';byId('message')?.before(badge);
 const overlay=document.createElement('div');overlay.id='v849NetworkBackdrop';
 overlay.innerHTML=`<section id="v849NetworkDialog" role="dialog" aria-modal="true" aria-label="Partie à deux en réseau">
