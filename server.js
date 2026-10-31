@@ -1,7 +1,10 @@
 'use strict';
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
-const {fromUpload,pathSafe,MAX_ARCHIVE}=require('./zip-games');
+const {fromUpload,packZip,pathSafe,MAX_ARCHIVE}=require('./zip-games');
 const {server:marvelServer}=require('./marvel/server');
+// Lost Cities rejoint le serveur HTTP EXISTANT : aucun deuxième port ou service Render.
+const {server:lostCitiesServer}=require('./lost-cities-online/server');
+const lostCitiesHandler=lostCitiesServer.listeners('request')[0];
 const PORT=Number(process.env.PORT||3000);
 const ROOT=__dirname,UPLOADS=path.join(ROOT,'uploads');
 const presets=JSON.parse(fs.readFileSync(path.join(ROOT,'games-config.json'),'utf8'));
@@ -23,11 +26,35 @@ function discoverGames(){
      const bytes=fs.readFileSync(path.join(UPLOADS,filename));if(bytes.length>MAX_ARCHIVE)throw Error('Archive de plus de 20 Mo.');
      const content=fromUpload(filename,bytes);total+=[...content.values()].reduce((n,b)=>n+b.length,0);if(total>90*1024*1024)throw Error('Limite mémoire des jeux atteinte.');
      const given=presets[id]||{}; const meta=metadata(content,id.replaceAll('-',' '));
-     catalog.set(id,{id,files:content,title:given.title||meta.title,description:given.description||meta.description,category:given.category||'Jeux HTML',icon:given.icon||'🎮',accent:given.accent||'#64dbe3',cover:meta.cover,multiplayer:!!given.multiplayer,featured:!!given.featured});
+     let uploadInfo={};
+     if(content.has('_portail_jeu.json'))try{uploadInfo=JSON.parse(content.get('_portail_jeu.json').toString('utf8'))}catch(_){}
+     const title=cleanText(uploadInfo.title)||given.title||meta.title;
+     const description=cleanText(uploadInfo.description)||given.description||meta.description;
+     const category=cleanText(uploadInfo.category)||given.category||'Jeux HTML';
+     const icon=cleanText(uploadInfo.icon).slice(0,6)||given.icon||'🎮';
+     const cover=uploadInfo.cover&&content.has(uploadInfo.cover)?uploadInfo.cover:meta.cover;
+     catalog.set(id,{id,files:content,title,description,category,icon,accent:given.accent||'#64dbe3',cover,multiplayer:!!given.multiplayer,featured:!!given.featured});
    }catch(e){errors.push(`${filename}: ${e.message}`);console.error('Jeu ignoré :',filename,e.message)}
  }
 }
 discoverGames();
+// Jeu embarqué dans un dossier dédié, ajouté au catalogue sans modifier les ZIP existants.
+// Une copie du HTML est servie par /games/lost-cities-duel/ ; son API multijoueur
+// passe uniquement par /api/lost-cities/* et ne touche jamais aux routes MARVEL.
+const LOST_CITIES_ID='lost-cities-duel';
+const lostIndex=path.join(ROOT,'lost-cities-online','index.html');
+if(fs.existsSync(lostIndex)){
+ const settings=presets[LOST_CITIES_ID]||{};
+ catalog.set(LOST_CITIES_ID,{
+  id:LOST_CITIES_ID,
+  files:new Map([['index.html',fs.readFileSync(lostIndex)]]),
+  title:settings.title||'LOST CITIES DUEL — FUSION',
+  description:settings.description||'Explore six expéditions en solo contre l’IA, à deux sur le même écran ou avec un ami en ligne.',
+  category:settings.category||'Cartes & stratégie',
+  icon:settings.icon||'🧭',accent:settings.accent||'#75c8fa',
+  cover:null,multiplayer:true,featured:!!settings.featured
+ });
+}else errors.push('lost-cities-online/index.html absent : Lost Cities non publié.');
 // MARVEL FUSION : pack du site dans uploads/marvel-medias/.
 // 1 JSON direct possible; les gros packs peuvent être découpés en
 // pack-part-01.json, pack-part-02.json, etc. Chaque fichier est publié via /games/.
@@ -99,21 +126,45 @@ function loginPage(bad=false){return `<!doctype html><html lang="fr"><head><meta
 function adminConfigured(){return !!(process.env.ADMIN_PASSWORD&&process.env.GITHUB_TOKEN&&/^[\w.-]+\/[\w.-]+$/.test(process.env.GITHUB_REPOSITORY||''))}
 async function githubUpload({name,filename,content}){
  const slug=asSlug(name||filename.replace(/\.[^.]+$/,''));if(!slug)throw Error('Donne un nom au jeu.');
- const ext=filename.toLowerCase().endsWith('.zip')?'zip':'html';
- const target=`uploads/${slug}.${ext}`;
+ if(['marvel-fusion','lost-cities-duel'].includes(slug)||catalog.has(slug)){
+  const e=Error('Ce nom est déjà utilisé. Choisis un autre nom pour ne pas remplacer un jeu existant.');e.status=409;throw e;
+ }
+ const target=`uploads/${slug}.zip`;
  const repository=process.env.GITHUB_REPOSITORY,branch=process.env.GITHUB_BRANCH||'main';
  const endpoint=`https://api.github.com/repos/${repository}/contents/${target}`;
  const headers={Authorization:`Bearer ${process.env.GITHUB_TOKEN}`,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','User-Agent':'Portail-Jeux-Perso','Content-Type':'application/json'};
- let sha;
- const get=await fetch(endpoint+'?ref='+encodeURIComponent(branch),{headers});
- if(get.status===200){sha=(await get.json()).sha}
- else if(get.status!==404)throw Error('Impossible de vérifier le dépôt GitHub ('+get.status+').');
- const payload={message:`Ajouter ou actualiser le jeu ${slug}`,content:content.toString('base64'),branch};
- if(sha)payload.sha=sha;
- const resp=await fetch(endpoint,{method:'PUT',headers,body:JSON.stringify(payload)});
+ const get=await fetch(endpoint+'?ref='+encodeURIComponent(branch),{headers,signal:AbortSignal.timeout(15000)});
+ if(get.status===200){const e=Error('Ce jeu existe déjà sur GitHub. Choisis un autre nom.');e.status=409;throw e;}
+ if(get.status!==404)throw Error('GitHub ne répond pas à la vérification ('+get.status+'). Vérifie le dépôt et le jeton.');
+ const payload={message:`Ajouter le jeu ${slug} depuis le portail`,content:content.toString('base64'),branch};
+ const resp=await fetch(endpoint,{method:'PUT',headers,body:JSON.stringify(payload),signal:AbortSignal.timeout(45000)});
  if(!resp.ok){const error=await resp.json().catch(()=>({}));throw Error(`GitHub a refusé l'envoi (${resp.status}) : ${cleanText(error.message||'Vérifie les permissions Contents: Read and write du jeton.')}`)}
- return {slug,overwrite:!!sha};
+ return {slug,path:target};
 }
+function gameUpload({name,description,category,icon,filename,base64,coverBase64,coverName}){
+ const binary=Buffer.from(String(base64||''),'base64');
+ if(!binary.length||binary.length>MAX_ARCHIVE)throw Error('Le fichier de jeu doit faire au maximum 20 Mo.');
+ if(!/\.(zip|html?)$/i.test(filename))throw Error('Fichier accepté : HTML ou ZIP.');
+ const files=fromUpload(filename,binary);
+ for(const key of files.keys())if(key.startsWith('.')||key.split('/').some(piece=>piece.startsWith('.')))files.delete(key);
+ // Rendre visible la fiche sur le portail sans modifier le code HTML du jeu.
+ const info={title:cleanText(name).slice(0,80),description:cleanText(description).slice(0,130)||'Un jeu à découvrir sur le portail.',category:cleanText(category).slice(0,55)||'Jeux HTML',icon:cleanText(icon).slice(0,6)||'🎮'};
+ if(!info.title)throw Error('Choisis un nom pour ton jeu.');
+ if(coverBase64){
+  const image=Buffer.from(String(coverBase64),'base64');
+  if(image.length<12||image.length>2*1024*1024)throw Error('Image de couverture limitée à 2 Mo.');
+  const extension=String(coverName||'').toLowerCase().match(/\.(png|jpe?g|webp)$/)?.[1];
+  const recognized=extension==='png'&&image.subarray(0,8).equals(Buffer.from('89504e470d0a1a0a','hex')) ||
+    (extension==='jpg'||extension==='jpeg')&&image.subarray(0,3).equals(Buffer.from('ffd8ff','hex')) ||
+    extension==='webp'&&image.toString('ascii',0,4)==='RIFF'&&image.toString('ascii',8,12)==='WEBP';
+  if(!recognized)throw Error('Utilise une couverture PNG, JPG ou WebP valide.');
+  info.cover='_couverture_portail.'+(extension==='jpeg'?'jpg':extension);
+  files.set(info.cover,image);
+ }
+ files.set('_portail_jeu.json',Buffer.from(JSON.stringify(info),'utf8'));
+ return packZip(files);
+}
+
 const publicRoot=path.join(ROOT,'public');
 const handlers=marvelServer.listeners('request');
 const server=http.createServer(async (req,res)=>{
@@ -127,21 +178,27 @@ const server=http.createServer(async (req,res)=>{
      res.writeHead(303,{Location:'/', 'Set-Cookie':`jeu_session=${exp}.${mac}; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000${req.headers['x-forwarded-proto']==='https'?'; Secure':''}`});return res.end();
    }
    if(!userAllowed(req))return respond(res,403,loginPage());
+   // Le serveur Lost Cities partage ce même port : réécriture interne du seul préfixe.
+   // /api/create et /api/state restent réservés à MARVEL FUSION, sans collision.
+   if(pn.startsWith('/api/lost-cities/')){
+     req.url='/api/'+req.url.slice('/api/lost-cities/'.length);
+     return lostCitiesHandler.call(lostCitiesServer,req,res);
+   }
    if(req.method==='GET'&&pn==='/api/portal/games'){
      return json(res,200,{games:[...catalog.values()].map(({files,...meta})=>meta),adminAvailable:adminConfigured(),repository:process.env.GITHUB_REPOSITORY||'',errors:errors.length?errors:undefined});
    }
    if(req.method==='POST'&&pn==='/api/portal/upload'){
       if(!adminConfigured())return json(res,503,{error:'Envoi direct non configuré : utilise GitHub > uploads > Add file > Upload files.'});
-      const raw=await read(req,23*1024*1024);let data;
+      const origin=req.headers.origin;
+      if(origin){const targetHost=req.headers['x-forwarded-host']||req.headers.host||'';try{if(new URL(origin).host!==targetHost)return json(res,403,{error:'Envoi depuis un autre site refusé.'})}catch(_){return json(res,403,{error:'Origine invalide.'})}}
+      const raw=await read(req,34*1024*1024);let data;
       try{data=JSON.parse(raw.toString('utf8'))}catch{throw Error('Requête invalide.')}
       if(!equal(data.password,process.env.ADMIN_PASSWORD))return json(res,403,{error:'Mot de passe administrateur incorrect.'});
-      const name=cleanText(data.name),filename=path.basename(String(data.filename||''));
-      if(!/\.(zip|html?)$/i.test(filename))throw Error('Seuls les fichiers HTML et ZIP sont acceptés.');
-      const binary=Buffer.from(String(data.base64||''),'base64');
-      if(!binary.length||binary.length>MAX_ARCHIVE)throw Error('Jeu vide ou trop volumineux (20 Mo maximum).');
-      fromUpload(filename,binary); // Valide le jeu AVANT d’enregistrer sa version définitive.
-      const written=await githubUpload({name,filename,content:binary});
-      return json(res,200,{ok:true,...written,message:'Jeu envoyé à GitHub. Render le publiera automatiquement après son redéploiement.'});
+      // L'image et les renseignements du jeu sont inclus dans le même ZIP : un seul commit GitHub.
+      const filename=path.basename(String(data.filename||''));
+      const packed=gameUpload({name:data.name,description:data.description,category:data.category,icon:data.icon,filename,base64:data.base64,coverBase64:data.coverBase64,coverName:data.coverName});
+      const written=await githubUpload({name:data.name,filename,content:packed});
+      return json(res,201,{ok:true,...written,message:'Ton jeu a été envoyé sur GitHub. Il apparaîtra sur le portail après le redéploiement de Render.'});
    }
    if(req.method==='GET'&&(pn==='/'||pn==='/index.html')){
       return respond(res,200,fs.readFileSync(path.join(publicRoot,'index.html')),mime['.html'],{'Cache-Control':'no-cache'});
@@ -166,7 +223,7 @@ const server=http.createServer(async (req,res)=>{
       return handlers[0].call(marvelServer,req,res);
    }
    return respond(res,404,'Page introuvable.','text/plain; charset=utf-8');
- }catch(e){console.error('Erreur portail:',e.message);if(!res.headersSent)json(res,e.message.includes('volumineux')?413:400,{error:e.message||'Erreur du serveur.'})}
+ }catch(e){console.error('Erreur portail:',e.message);if(!res.headersSent)json(res,e.status||((e.message.includes('volumineux')||e.message.includes('dépasse 20 Mo'))?413:400),{error:e.message||'Erreur du serveur.'})}
 });
 if(require.main===module)server.listen(PORT,'0.0.0.0',()=>{
  console.log(`\n🎮 PORTAIL DE JEUX — http://localhost:${PORT}`);
