@@ -65,4 +65,24 @@ function fromUpload(filename,buffer){
   if(/\.html?$/i.test(filename) && buffer.length<=MAX_FILE){return new Map([['index.html',buffer]])}
   throw Error('Formats autorisés : .zip, .html ou .htm.');
 }
-module.exports={unpackZip,fromUpload,pathSafe,MAX_ARCHIVE};
+// Crée une archive sûre, avec une seule mise à jour GitHub pour le jeu et sa fiche.
+function packZip(files){
+  if(!(files instanceof Map)||!files.size||files.size>MAX_FILES)throw Error('Jeu vide ou trop de fichiers.');
+  const local=[],central=[];let offset=0,total=0;
+  function crc32(buffer){let c=~0;for(const n of buffer){c^=n;for(let k=0;k<8;k++)c=(c>>>1)^(0xEDB88320&-(c&1))}return ~c>>>0}
+  for(const [name,entry] of files){
+    if(!pathSafe(name)||name.startsWith('.')||name.split('/').some(x=>x.startsWith('.')))throw Error('Nom de fichier invalide dans le jeu.');
+    const fn=Buffer.from(name,'utf8'),raw=Buffer.isBuffer(entry)?entry:Buffer.from(entry);
+    if(fn.length>500||raw.length>MAX_FILE||(total+=raw.length)>MAX_TOTAL)throw Error('Jeu trop volumineux.');
+    const packed=zlib.deflateRawSync(raw,{level:6}),crc=crc32(raw);
+    const lh=Buffer.alloc(30);lh.writeUInt32LE(0x04034b50);lh.writeUInt16LE(20,4);lh.writeUInt16LE(0x800,6);lh.writeUInt16LE(8,8);lh.writeUInt32LE(crc,14);lh.writeUInt32LE(packed.length,18);lh.writeUInt32LE(raw.length,22);lh.writeUInt16LE(fn.length,26);
+    local.push(lh,fn,packed);
+    const cent=Buffer.alloc(46);cent.writeUInt32LE(0x02014b50);cent.writeUInt16LE(20,4);cent.writeUInt16LE(20,6);cent.writeUInt16LE(0x800,8);cent.writeUInt16LE(8,10);cent.writeUInt32LE(crc,16);cent.writeUInt32LE(packed.length,20);cent.writeUInt32LE(raw.length,24);cent.writeUInt16LE(fn.length,28);cent.writeUInt32LE(offset,42);
+    central.push(cent,fn);offset+=lh.length+fn.length+packed.length;
+  }
+  const centralBuf=Buffer.concat(central),eocd=Buffer.alloc(22);eocd.writeUInt32LE(0x06054b50);eocd.writeUInt16LE(files.size,8);eocd.writeUInt16LE(files.size,10);eocd.writeUInt32LE(centralBuf.length,12);eocd.writeUInt32LE(offset,16);
+  const result=Buffer.concat([...local,centralBuf,eocd]);
+  if(result.length>MAX_ARCHIVE)throw Error('Le jeu avec sa couverture dépasse 20 Mo. Compresse les images avant de réessayer.');
+  return result;
+}
+module.exports={unpackZip,fromUpload,packZip,pathSafe,MAX_ARCHIVE};
