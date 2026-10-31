@@ -7,5 +7,14 @@
     "accent": "#f96c85",
     "multiplayer": true,
     "featured": true
+  },
+  "lost-cities-duel": {
+    "title": "LOST CITIES DUEL — FUSION",
+    "description": "Pars à l’aventure contre l’IA, sur le même écran ou contre un ami en ligne avec un code de salon.",
+    "category": "Cartes & stratégie",
+    "icon": "🧭",
+    "accent": "#75c8fa",
+    "multiplayer": true,
+    "featured": true
   }
 }

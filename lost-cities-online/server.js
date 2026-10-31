@@ -8,7 +8,9 @@ const crypto = require('node:crypto');
 const config = JSON.parse(fs.readFileSync(path.join(__dirname,'config.json'),'utf8'));
 const PORT = Number(process.env.PORT || config.port || 3000);
 const HOST = process.env.HOST || config.host || '0.0.0.0';
-const DATA_FILE = path.resolve(process.env.DATA_FILE || path.join(__dirname,'data','parties.json'));
+// Ne jamais réutiliser DATA_FILE du portail (s'il est défini pour un autre jeu).
+// L'ancien paramètre DATA_FILE reste reconnu au lancement autonome de Lost Cities.
+const DATA_FILE = path.resolve(process.env.LOST_CITIES_DATA_FILE || (require.main===module?process.env.DATA_FILE:null) || path.join(__dirname,'data','parties.json'));
 // Sur Render Free, ce fichier est temporaire ; utiliser DATA_FILE sur un disque persistant pour la conservation.
 const JOIN_LIMIT = new Map();
 const MAX_ROOMS = 60;
@@ -166,6 +168,8 @@ function allowRequest(req){
 const server=http.createServer(async(req,res)=>{
  try{
   const url=new URL(req.url,'http://localhost');
+  // Alias pratique si ce serveur est exécuté seul au lieu d'être monté dans le portail.
+  if(url.pathname.startsWith('/api/lost-cities/'))url.pathname='/api/'+url.pathname.slice('/api/lost-cities/'.length);
   if(url.pathname==='/health'&&req.method==='GET')return send(res,200,{ok:true,rooms:ROOMS.size,service:'Lost Cities Duel Online'});
   if(url.pathname.startsWith('/api/')){
    if(!allowRequest(req))return error(res,403,'Origine non autorisée. Ouvre le jeu depuis le serveur.');
@@ -208,4 +212,7 @@ const server=http.createServer(async(req,res)=>{
   res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin','X-Frame-Options':'DENY'});
   res.end(req.method==='HEAD'?undefined:data);
  }catch(e){console.error(e?.message||e);error(res,400,e.message||'Erreur du serveur.')}});
-server.listen(PORT,HOST,()=>{console.log(`\nLost Cities Duel — en ligne : port ${PORT} (écoute ${HOST})`);console.log(`Local : http://localhost:${PORT}`);console.log('Render : utiliser l’URL HTTPS fournie dans le tableau de bord.\n')});
+// Démarrage direct possible pour les tests autonomes, mais aucun port supplémentaire
+// lors de require('./lost-cities-online/server') depuis le portail principal.
+if(require.main===module)server.listen(PORT,HOST,()=>{console.log(`\nLost Cities Duel — en ligne : port ${PORT} (écoute ${HOST})`);console.log(`Local : http://localhost:${PORT}`);console.log('Render : utiliser l’URL HTTPS fournie dans le tableau de bord.\n')});
+module.exports={server};
