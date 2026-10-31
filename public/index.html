@@ -37,21 +37,47 @@
     </main>
     <footer><span>✦ MY GAME ARCADE</span><span>Des jeux à partager, pas à télécharger.</span><span>Fait pour jouer entre amis.</span></footer>
   </div>
-  <dialog id="adminModal" aria-labelledby="adminTitle" class="admin-dialog">
-    <form method="dialog"><button class="close-dialog" aria-label="Fermer">✕</button></form>
-    <div class="admin-label">ESPACE CRÉATEUR</div><h2 id="adminTitle">Ajouter un jeu</h2>
-    <p class="admin-explain">Choisis un fichier <b>HTML</b> ou un <b>ZIP</b> contenant <code>index.html</code> et ses images, sons ou scripts. Il sera proposé à tes amis depuis ce portail.</p>
+  <dialog id="adminModal" aria-labelledby="adminTitle" class="admin-dialog admin-dialog-v109">
+    <form method="dialog"><button class="close-dialog" aria-label="Fermer la fenêtre">✕</button></form>
+    <div class="admin-label">ESPACE CRÉATEUR</div>
+    <h2 id="adminTitle">🎮 Ajouter un jeu</h2>
+    <p class="admin-explain">Tu sélectionnes ton jeu, tu lui donnes un nom, puis tu cliques sur <b>Publier</b>. Le portail s'occupe du reste !</p>
     <div id="adminConfigured" hidden>
       <form id="uploadForm">
-        <label class="field"><span>Nom du jeu</span><input id="uploadName" maxlength="80" required placeholder="Ex. Course Galactique" autocomplete="off"></label>
-        <label class="field"><span>Mot de passe administrateur</span><input id="uploadPassword" type="password" required placeholder="Ton mot de passe privé" autocomplete="off"></label>
-        <label class="file-drop" id="dropZone" for="uploadFile"><span class="drop-icon">⤒</span><strong id="fileLabel">Choisir ou glisser un fichier HTML / ZIP</strong><small>Jusqu'à 20 Mo · Un ZIP peut contenir tous les fichiers du jeu</small><input id="uploadFile" type="file" accept=".zip,.html,.htm" required></label>
-        <button class="primary-action upload-action" id="sendUpload" type="submit">Publier le jeu <span>↗</span></button>
+        <div class="upload-steps"><span>1 · Fichier</span><span>2 · Présentation</span><span>3 · Publier</span></div>
+        <label class="file-drop" id="dropZone" for="uploadFile"><span class="drop-icon">⤒</span><strong id="fileLabel">Choisir ou glisser ton jeu HTML / ZIP</strong><small>Un seul HTML ou un ZIP complet · 20 Mo maximum</small><input id="uploadFile" type="file" accept=".zip,.html,.htm" required></label>
+        <div class="upload-preview" id="uploadPreview" hidden>
+          <div class="upload-preview-cover" id="uploadPreviewCover"><span id="uploadPreviewIcon">🎮</span><img id="uploadCoverImage" alt="Aperçu de la couverture" hidden></div>
+          <div class="upload-preview-info"><small>APERÇU DE LA VIGNETTE</small><strong id="uploadPreviewTitle">Mon jeu</strong><span id="uploadPreviewDescription">Un jeu à découvrir sur le portail.</span></div>
+        </div>
+        <div class="upload-fields">
+          <label class="field"><span>Nom du jeu <b>*</b></span><input id="uploadName" maxlength="80" required placeholder="Ex. Mon jeu de cartes" autocomplete="off"></label>
+          <label class="field"><span>Description (facultatif)</span><input id="uploadDescription" maxlength="130" placeholder="Ex. Un jeu de stratégie contre l'IA"></label>
+          <div class="upload-field-grid">
+            <label class="field"><span>Catégorie</span><select id="uploadCategory"><option>Jeux HTML</option><option>Cartes & stratégie</option><option>Arcade</option><option>Puzzle & réflexion</option><option>Plateforme</option><option>Course</option><option>Aventure</option><option>Autres jeux</option></select></label>
+            <label class="field"><span>Icône</span><select id="uploadIcon"><option>🎮</option><option>🃏</option><option>🧩</option><option>🎲</option><option>🏎️</option><option>⚔️</option><option>🚀</option><option>🌍</option><option>🎯</option><option>🏆</option><option>🕹️</option></select></label>
+          </div>
+          <label class="field"><span>Image de couverture (facultatif)</span><input id="uploadCover" type="file" accept="image/png,image/jpeg,image/webp"><small>PNG, JPG ou WebP · 2 Mo maximum · sinon ton icône s'affiche</small></label>
+        </div>
+        <label class="field admin-password-field"><span>Mot de passe administrateur <b>*</b></span><input id="uploadPassword" type="password" required placeholder="Ton mot de passe privé" autocomplete="off"></label>
+        <button class="primary-action upload-action" id="sendUpload" type="submit">🚀 Ajouter le jeu au portail <span>↗</span></button>
       </form>
       <p class="upload-notice" id="uploadStatus" role="status" aria-live="polite"></p>
-      <p class="admin-tip">Après l'ajout, l'hébergement republie automatiquement le portail. Une partie en cours peut être interrompue pendant ce redéploiement : ajoute tes jeux entre deux parties.</p>
+      <div id="uploadResult" class="upload-result" hidden><strong id="uploadResultTitle">Jeu envoyé !</strong><p id="uploadResultInfo"></p><a id="uploadResultLink" class="primary-action" href="#" target="_blank" rel="noopener noreferrer" hidden>🎮 Ouvrir le jeu <span>↗</span></a></div>
+      <p class="admin-tip">Les jeux classiques HTML fonctionnent directement ; ceux avec un serveur Node.js demandent une intégration particulière. La mise en ligne passe par GitHub puis Render. Cela peut redémarrer ton portail : publie plutôt entre deux parties. Les jeux déjà présents ne seront pas remplacés.</p>
     </div>
-    <div id="adminManual" hidden><div class="manual-card"><strong>Ajout sans code, depuis GitHub</strong><p>Pour ajouter un jeu, ouvre le dossier <code>uploads</code> de ton dépôt GitHub, clique sur <b>Add file → Upload files</b>, glisse le ZIP ou HTML, puis valide. Render actualisera automatiquement le site.</p><a id="githubUploadLink" href="https://github.com" target="_blank" rel="noopener noreferrer" class="primary-action">Ouvrir GitHub <span>↗</span></a></div><p class="admin-tip">Pour ajouter directement depuis cette fenêtre, configure une fois <code>ADMIN_PASSWORD</code>, <code>GITHUB_REPOSITORY</code> et <code>GITHUB_TOKEN</code> dans Render. Voir le guide fourni.</p></div>
+    <div id="adminManual" hidden>
+      <div class="manual-card">
+        <strong>🔧 Activer l'ajout automatique (une seule fois)</strong>
+        <p>Ton portail sait déjà ajouter des jeux. Il faut simplement relier son formulaire à ton dépôt GitHub en configurant trois paramètres dans Render. Ensuite, tu ajouteras tes jeux depuis cette fenêtre, sans retourner sur GitHub.</p>
+        <ol><li>Sur GitHub, crée un jeton ayant l'autorisation <b>Contents: Read and write</b> sur le dépôt du portail.</li><li>Sur Render, ouvre ton service <b>mon-portail-jeux</b> → <b>Environment</b>.</li><li>Ajoute <code>ADMIN_PASSWORD</code> (un mot de passe personnel), <code>GITHUB_REPOSITORY</code> (propriétaire/nom-du-dépôt), <code>GITHUB_TOKEN</code> (le jeton GitHub). Sauvegarde.</li><li>Après le redéploiement, actualise le site et utilise <b>Ajouter un jeu</b>.</li></ol>
+        <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer" class="primary-action">1. Créer le jeton GitHub <span>↗</span></a>
+        <a href="https://dashboard.render.com/" target="_blank" rel="noopener noreferrer" class="manual-secondary">2. Ouvrir Render ↗</a>
+        <p><b>Ne colle jamais ton jeton GitHub dans une conversation ou dans un fichier public.</b> Il doit rester uniquement dans les variables d'environnement Render.</p>
+      </div>
+      <div class="manual-card admin-manual-alternate"><strong>Ou ajouter un jeu manuellement</strong><p>Si tu ne souhaites pas configurer cette fonction, place ton fichier HTML ou ZIP dans le dossier <code>uploads</code> sur GitHub.</p><a id="githubUploadLink" href="https://github.com" target="_blank" rel="noopener noreferrer" class="manual-secondary">Ouvrir le dépôt GitHub ↗</a></div>
+      <p class="admin-tip">Le guide inclus dans le pack explique ces étapes avec les intitulés exacts des boutons.</p>
+    </div>
   </dialog>
 </body>
 </html>
