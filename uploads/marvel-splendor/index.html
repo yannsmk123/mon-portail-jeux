@@ -6002,7 +6002,15 @@ updateUI();
  const picker=document.createElement('input');picker.type='file';picker.accept='.json,application/json';picker.hidden=true;choose.append(picker);
  bar.append(label,check,repair,choose);
  document.getElementById('message')?.insertAdjacentElement('afterend',bar);
- const status=(message,kind='info')=>{label.textContent=message;bar.dataset.state=kind;};
+ // Cache l'ensemble du bandeau uniquement après un chargement JSON réussi.
+ // En cas d'échec, les trois boutons restent disponibles. Pour les réafficher
+ // temporairement après succès : ajouter ?json-tools=1 à l'adresse du jeu.
+ const keepToolsVisible=new URLSearchParams(location.search).get('json-tools')==='1';
+ const status=(message,kind='info')=>{
+   label.textContent=message;
+   bar.dataset.state=kind;
+   bar.style.display=(kind==='ok'&&!keepToolsVisible)?'none':'';
+ };
  const fingerprint=(text)=>{
    // Deux accumulateurs simples suffisent pour repérer une mise à jour du fichier.
    let a=2166136261,b=0x811c9dc5;
