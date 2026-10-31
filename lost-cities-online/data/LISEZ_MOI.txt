@@ -1,0 +1,3 @@
+Les parties sont enregistrées ici si DATA_FILE n’est pas défini. Ne publie jamais parties.json sur GitHub.
+Render Free : les fichiers générés dans ce dossier ne survivent pas aux redémarrages.
+Pour conserver les parties sur un service Render payant avec disque persistant, définir DATA_FILE=/var/data/parties.json et monter un disque sur /var/data.
