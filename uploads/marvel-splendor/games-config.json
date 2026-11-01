@@ -1,0 +1,38 @@
+{
+  "marvel-fusion": {
+    "title": "MARVEL FUSION",
+    "description": "Construis tes combinaisons, déclenche les pouvoirs des héros et défie un ami, même depuis deux maisons différentes.",
+    "category": "Cartes & stratégie",
+    "icon": "⚡",
+    "accent": "#f96c85",
+    "multiplayer": true,
+    "featured": true
+  },
+  "lost-cities-duel": {
+    "title": "LOST CITIES DUEL — FUSION",
+    "description": "Pars à l’aventure contre l’IA, sur le même écran ou contre un ami en ligne avec un code de salon.",
+    "category": "Cartes & stratégie",
+    "icon": "🧭",
+    "accent": "#75c8fa",
+    "multiplayer": true,
+    "featured": true
+  },
+  "uno": {
+    "title": "UNO PARTY 🎉",
+    "description": "Défie tes amis jusqu’à 4 joueurs, ou affronte des bots !",
+    "category": "Cartes & stratégie",
+    "icon": "🃏",
+    "accent": "#ff6b4a",
+    "multiplayer": true,
+    "featured": true
+  },
+  "splendor": {
+    "title": "Marvel Splendor",
+    "description": "Affronte Ultron en solo ou invite un ami avec un code pour jouer à deux en ligne.",
+    "category": "Cartes & stratégie",
+    "icon": "🃏",
+    "accent": "#d3ae6e",
+    "multiplayer": true,
+    "featured": true
+  }
+}

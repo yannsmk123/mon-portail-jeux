@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Marvel Splendor — V8.50 — Deux joueurs en réseau (corrigé)</title>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Marvel Splendor — V8.51 — 2 joueurs en ligne</title>
 <style id="v787-styles-consolides">
 /* V7.87 : styles historiques regroupés, précédences préservées. */
 /* ===== base-0 ===== */
@@ -3005,7 +3005,7 @@ function scheduleAiMove(){
  aiTimer=setTimeout(()=>{aiTimer=null;aiMove()},window.MarvelUltronConfig.get().delay);
 }
 window.addEventListener('marvel-ultron-settings-changed',e=>{
- if(!game)return;
+ if(!game||game.mode==='online')return;
  if(e.detail?.difficulty && game.difficulty!==e.detail.difficulty){game.difficulty=e.detail.difficulty;save();render()}
  if(game.turn===1&&!game.end)scheduleAiMove();
 });
@@ -5816,192 +5816,230 @@ window.MarvelTouchMode={get enabled(){return enabled;},set:setMode};
 </script>
 <script id="v849-network-client">
 (()=>{'use strict';
-// Réseau V8.49 : moteur autoritaire chez l'hôte, invité = intentions validées et états reçus.
+// V8.51 : deux joueurs en ligne sur le portail Render, reprise automatique.
+// Le moteur de Splendor, les règles et les sauvegardes solo ne sont pas modifiés.
 const byId=id=>document.getElementById(id);
 const engine=()=>window.GemEngine;
-const networkButton=document.createElement('button');networkButton.className='btn';networkButton.type='button';networkButton.id='v849NetworkButton';networkButton.textContent='🌐 Réseau';networkButton.title='Créer ou rejoindre une partie à deux';
-const settingsButton=byId('settingsBtn');if(settingsButton)settingsButton.before(networkButton);
-// Bouton « Accueil du portail » : ne modifie ni le réseau ni le jeu.
-// GitHub Pages et le portail Render ont deux origines différentes.
-const portalHomeButton=document.createElement('button');
-portalHomeButton.type='button';
-portalHomeButton.className='btn';
-portalHomeButton.id='marvelPortalHomeButton';
-portalHomeButton.textContent='🏠 Accueil du portail';
-portalHomeButton.title='Retourner à la page d’accueil de Mon Portail';
+const STORAGE='marvel_splendor_online_v851';
+function readSession(){try{const s=JSON.parse(localStorage.getItem(STORAGE)||'null');return s&&/^[A-F0-9]{6}$/.test(s.code)&&/^[a-f0-9]{48}$/.test(s.token)&&['host','guest'].includes(s.role)?s:null;}catch(_){return null;}}
+function writeSession(s){try{if(s)localStorage.setItem(STORAGE,JSON.stringify(s));else localStorage.removeItem(STORAGE);}catch(_){}}
+const networkButton=document.createElement('button');networkButton.className='btn';networkButton.type='button';networkButton.id='v849NetworkButton';networkButton.textContent='🌐 2 joueurs en ligne';networkButton.title='Créer ou rejoindre une partie sur Internet';
+byId('settingsBtn')?.before(networkButton);
+// Conserver le bouton de retour au portail de la version précédente.
+const portalHomeButton=document.createElement('button');portalHomeButton.type='button';portalHomeButton.className='btn';portalHomeButton.id='marvelPortalHomeButton';portalHomeButton.textContent='🏠 Accueil du portail';
 networkButton.after(portalHomeButton);
 const portalHomeKey='marvel_splendor_portal_home_v1';
 function normalizePortalHome(value){
- try{
-  const url=new URL(String(value||'').trim());
-  return ['https:','http:'].includes(url.protocol)&&url.hostname ? url.origin+'/' : '';
- }catch(_){return '';}
+ try{const u=new URL(String(value||'').trim());return ['https:','http:'].includes(u.protocol)&&u.hostname?u.origin+'/':'';}catch(_){return '';}
 }
-function getPortalHome(){
- const urlParam=new URLSearchParams(location.search).get('portal-home');
- const specified=normalizePortalHome(urlParam);
+function portalHome(){
+ const specified=normalizePortalHome(new URLSearchParams(location.search).get('portal-home'));
  if(specified){try{localStorage.setItem(portalHomeKey,specified);}catch(_){}return specified;}
- // Le navigateur transmet normalement l'origine du portail lorsqu'on lance le jeu depuis celui-ci.
- try{
-  const ref=new URL(document.referrer);
-  const fromPortal=ref.origin!==location.origin &&
-   (/(^|\.)onrender\.com$/i.test(ref.hostname) || /mon-portail-jeux/i.test(ref.hostname));
-  if(fromPortal){const home=ref.origin+'/';try{localStorage.setItem(portalHomeKey,home);}catch(_){}return home;}
- }catch(_){}
- try{return normalizePortalHome(localStorage.getItem(portalHomeKey));}catch(_){return '';}
+ try{const ref=new URL(document.referrer);if(ref.origin!==location.origin&&(/(^|\.)onrender\.com$/i.test(ref.hostname)||/mon-portail-jeux/i.test(ref.hostname))){
+  const home=ref.origin+'/';try{localStorage.setItem(portalHomeKey,home);}catch(_){}return home;
+ }}catch(_){}
+ try{const stored=normalizePortalHome(localStorage.getItem(portalHomeKey));if(stored)return stored;}catch(_){}
+ if(/(^|\.)onrender\.com$/i.test(location.hostname))return location.origin+'/';
+ const supplied=window.prompt('Adresse HTTPS de la page d’accueil de ton portail :','');
+ const entered=normalizePortalHome(supplied);if(entered){try{localStorage.setItem(portalHomeKey,entered);}catch(_){}return entered;}
+ return '';
 }
-portalHomeButton.addEventListener('click',()=>{
- let destination=getPortalHome();
- if(!destination){
-  const supplied=window.prompt('Adresse de la page d’accueil de ton portail (à indiquer une seule fois) :','');
-  if(supplied===null)return;
-  destination=normalizePortalHome(supplied);
-  if(!destination){window.alert('Adresse invalide : indique une adresse commençant par https://');return;}
-  try{localStorage.setItem(portalHomeKey,destination);}catch(_){}
- }
- window.location.assign(destination);
-});
-
-const badge=document.createElement('div');badge.id='v849NetworkBadge';badge.setAttribute('role','status');badge.textContent='🌐 Partie réseau';byId('message')?.before(badge);
+portalHomeButton.onclick=()=>{const destination=portalHome();if(destination)location.assign(destination);};
+const badge=document.createElement('div');badge.id='v849NetworkBadge';badge.setAttribute('role','status');byId('message')?.before(badge);
 const overlay=document.createElement('div');overlay.id='v849NetworkBackdrop';
-overlay.innerHTML=`<section id="v849NetworkDialog" role="dialog" aria-modal="true" aria-label="Partie à deux en réseau">
-<header><h2>🌐 Partie à 2 joueurs</h2><button class="btn" id="v849Close" type="button">✕ Fermer</button></header>
-<p class="v849-note">Le joueur 1 héberge la partie ; le joueur 2 la rejoint avec un code. Les deux doivent ouvrir le jeu depuis <strong>l'adresse du serveur</strong>. Importez chacun votre sauvegarde JSON dans les réglages avant de commencer si vous voulez retrouver vos illustrations.</p>
-<label class="v849-field"><span>Adresse du serveur</span><input id="v849Server" type="text" autocomplete="off" spellcheck="false" placeholder="http://192.168.1.10:8787" aria-label="Adresse du serveur réseau"></label>
-<label class="v849-field"><span>Premier joueur (choisi par l'hôte)</span><select id="v849Starter"><option value="random">🎲 Aléatoire (50 / 50)</option><option value="player">👤 Joueur 1 (hôte)</option><option value="ultron">👤 Joueur 2 (invité)</option></select></label>
-<div class="v849-actions"><button class="btn primary" id="v849Create" type="button">➕ Créer une partie</button><button class="btn" id="v849Join" type="button">🔗 Rejoindre une partie</button></div>
-<label class="v849-field"><span>Code de la partie à rejoindre</span><input id="v849RoomInput" type="text" maxlength="9" autocomplete="off" spellcheck="false" placeholder="EX. : AB2CDE" aria-label="Code de la partie"></label>
-<div id="v849RoomLine" hidden>Code de ta salle : <strong class="v849-code" id="v849Code">———</strong> <button class="btn" id="v849Copy" type="button">Copier</button></div>
-<div id="v849NetStatus" role="status" aria-live="polite">Choisis « Créer » sur le premier ordinateur, puis « Rejoindre » sur le second.</div>
-<div class="v849-actions"><button class="btn" id="v849Rematch" type="button" hidden>↻ Nouvelle manche (hôte)</button><button class="btn" id="v849Leave" type="button" hidden>✕ Quitter la partie</button></div>
-<p class="v849-note">Une partie réseau exige un serveur WebSocket actif. En local, les deux PC utilisent l'adresse IP du PC serveur ; sur Internet, utilise un hébergement accessible avec HTTPS/WSS ou un réseau privé sécurisé. Une déconnexion arrête la session. Les sauvegardes solo locales ne sont pas écrasées.</p>
+overlay.innerHTML=`<section id="v849NetworkDialog" role="dialog" aria-modal="true" aria-label="Deux joueurs en ligne">
+<header><h2>🌐 2 joueurs en ligne</h2><button class="btn" id="v849Close" type="button">✕ Fermer</button></header>
+<p class="v849-note">Chaque joueur ouvre <strong>ce même portail</strong> sur son appareil. Le joueur 1 crée la partie puis partage son code à six caractères au joueur 2. Aucun serveur supplémentaire à saisir.</p>
+<label class="v849-field"><span>Qui commence ? (choix du joueur 1)</span><select id="v849Starter"><option value="random">🎲 Tirage au sort</option><option value="player">👤 Joueur 1</option><option value="ultron">👤 Joueur 2</option></select></label>
+<div class="v849-actions"><button class="btn primary" id="v849Create" type="button">➕ Créer une partie</button><button class="btn" id="v849Join" type="button">🔗 Rejoindre avec le code</button></div>
+<label class="v849-field"><span>Code reçu du joueur 1</span><input id="v849RoomInput" type="text" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="Ex. : AB12CD" aria-label="Code de la partie"></label>
+<div id="v849RoomLine" hidden>Code d'invitation : <strong class="v849-code" id="v849Code">———</strong> <button class="btn" id="v849Copy" type="button">📋 Copier</button></div>
+<div id="v849NetStatus" role="status" aria-live="polite">Choisis « Créer une partie » ou saisis le code reçu.</div>
+<div class="v849-actions"><button class="btn" id="v849Resume" type="button" hidden>↻ Reprendre ma partie</button><button class="btn" id="v849Rematch" type="button" hidden>↻ Nouvelle manche (joueur 1)</button><button class="btn" id="v849Leave" type="button" hidden>✕ Quitter définitivement</button></div>
+<p class="v849-note">En cas de coupure, le jeu tente de se reconnecter automatiquement. Après fermeture de l'onglet, « Reprendre ma partie » utilise votre accès enregistré sur cet appareil. Une sortie définitive ferme le salon pour les deux joueurs. Les sauvegardes solo restent indépendantes. Les parties en cours peuvent être perdues si Render redémarre le serveur.</p>
 </section>`;
 document.body.append(overlay);
-let ws=null,role=null,room='',socketReady=false,partner=false,gameReady=false,pending=false,revision=0,opening=false;
-let showDialog=false,initialGameSeen=false,endingShown=false;
-let lastStarter='random';
-const status=text=>{const node=byId('v849NetStatus');if(node)node.textContent=String(text);};
+let ws=null,role=null,room='',partner=false,gameReady=false,socketReady=false,pending=false,revision=0,opening=false;
+let endingShown=false,initialGameSeen=false,retryTimer=null,retryDelay=1200,connectedOnce=false,closingExplicitly=false;
+const status=text=>{byId('v849NetStatus').textContent=String(text);};
 function updateUI(){
- const active=role!==null;
+ const active=!!role,session=readSession();
  document.body.classList.toggle('v849-network-game',active&&gameReady);
- byId('v849RoomLine').hidden=!room;
- byId('v849Code').textContent=room||'———';
+ byId('v849RoomLine').hidden=!room;byId('v849Code').textContent=room||'———';
  byId('v849Leave').hidden=!active;
- byId('v849Rematch').hidden=!(role==='host'&&partner&&gameReady);
- byId('v849Create').disabled=opening||active;
- byId('v849Join').disabled=opening||active;
- byId('v849Starter').disabled=active&&role!=='host';
- byId('v849RoomInput').disabled=active;
- if(active)badge.textContent='🌐 '+(role==='host'?'Joueur 1':'Joueur 2')+' · '+(room||'')+(partner?' · adversaire connecté':' · en attente');
- if(!active){const first=document.querySelector('.playerPanel .owned-head > span:first-child'),second=document.querySelector('.opponentPanel .owned-head > span:first-child');if(first)first.textContent='🧑 MES CARTES RECRUTÉES';if(second)second.textContent='🤖 CARTES RECRUTÉES PAR ULTRON';const labels=document.querySelectorAll('.reserved-strip .reserve-label');if(labels[0]?.firstChild)labels[0].firstChild.textContent='🛡️ Réserve Ultron';if(labels[1]?.firstChild)labels[1].firstChild.textContent='🛡️ Ma réserve';}if(active&&gameReady){const mine=role==='host'?0:1;const first=document.querySelector('.playerPanel .owned-head > span:first-child'),second=document.querySelector('.opponentPanel .owned-head > span:first-child');if(first)first.textContent=mine===0?'🧑 MES CARTES RECRUTÉES':'👤 CARTES RECRUTÉES JOUEUR 1';if(second)second.textContent=mine===1?'🧑 MES CARTES RECRUTÉES':'👤 CARTES RECRUTÉES JOUEUR 2';const reservedLabels=document.querySelectorAll('.reserved-strip .reserve-label');if(reservedLabels[0]?.firstChild)reservedLabels[0].firstChild.textContent=mine===1?'🛡️ Ma réserve':'🛡️ Réserve Joueur 2';if(reservedLabels[1]?.firstChild)reservedLabels[1].firstChild.textContent=mine===0?'🛡️ Ma réserve':'🛡️ Réserve Joueur 1';}
+ byId('v849Resume').hidden=active||!session;
+ byId('v849Rematch').hidden=!(role==='host'&&partner&&gameReady&&socketReady);
+ byId('v849Create').disabled=opening||active;byId('v849Join').disabled=opening||active;
+ byId('v849RoomInput').disabled=active;byId('v849Starter').disabled=active&&role!=='host';
+ if(active)badge.textContent=`🌐 Joueur ${role==='host'?1:2} · ${room} · ${!socketReady?'reconnexion…':partner?'adversaire connecté':'adversaire absent'}`;
+ const first=document.querySelector('.playerPanel .owned-head > span:first-child');
+ const second=document.querySelector('.opponentPanel .owned-head > span:first-child');
+ const labels=document.querySelectorAll('.reserved-strip .reserve-label');
+ if(active&&gameReady){
+  if(first)first.textContent=role==='host'?'🧑 MES CARTES RECRUTÉES':'👤 CARTES RECRUTÉES JOUEUR 1';
+  if(second)second.textContent=role==='guest'?'🧑 MES CARTES RECRUTÉES':'👤 CARTES RECRUTÉES JOUEUR 2';
+  if(labels[0]?.firstChild)labels[0].firstChild.textContent=role==='guest'?'🛡️ Ma réserve':'🛡️ Réserve Joueur 2';
+  if(labels[1]?.firstChild)labels[1].firstChild.textContent=role==='host'?'🛡️ Ma réserve':'🛡️ Réserve Joueur 1';
+ }else if(!active){
+  if(first)first.textContent='🧑 MES CARTES RECRUTÉES';if(second)second.textContent='🤖 CARTES RECRUTÉES PAR ULTRON';
+  if(labels[0]?.firstChild)labels[0].firstChild.textContent='🛡️ Réserve Ultron';
+  if(labels[1]?.firstChild)labels[1].firstChild.textContent='🛡️ Ma réserve';
+ }
 }
-function defaultServer(){const u=location;if(/^https?:$/.test(u.protocol))return u.origin;return 'http://localhost:8787';}
-try{byId('v849Server').value=localStorage.getItem('marvel_network_server_v1')||defaultServer();}catch(_e){byId('v849Server').value=defaultServer();}
-function socketAddress(){
- const raw=byId('v849Server').value.trim();
- let url;
- try{url=new URL(raw.includes('://')?raw:'http://'+raw);}catch(_e){throw new Error('Adresse de serveur incorrecte. Exemple : http://192.168.1.10:8787');}
- if(!['https:','http:','ws:','wss:'].includes(url.protocol))throw new Error('Adresse non prise en charge.');
- const secure=url.protocol==='https:'||url.protocol==='wss:';
- if(location.protocol==='https:'&&!secure)throw new Error('Depuis HTTPS, utilise un serveur HTTPS/WSS.');
- try{localStorage.setItem('marvel_network_server_v1',url.origin);}catch(_e){}
- return (secure?'wss://':'ws://')+url.host+'/socket';
-}
-function send(message){if(!ws||ws.readyState!==WebSocket.OPEN)return false;try{ws.send(JSON.stringify(message));return true;}catch(e){status('Envoi impossible : '+e.message);return false;}}
-function resetConnection(message){
- const oldWs=ws;ws=null;opening=false;role=null;room='';partner=false;gameReady=false;pending=false;socketReady=false;revision=0;initialGameSeen=false;endingShown=false;
- if(oldWs&&(oldWs.readyState===WebSocket.CONNECTING||oldWs.readyState===WebSocket.OPEN)){try{oldWs.close(1000,'Fin de session');}catch(_e){}}
- updateUI();if(message)status(message);
+function send(message){if(!ws||ws.readyState!==WebSocket.OPEN)return false;try{ws.send(JSON.stringify(message));return true;}catch(_){return false;}}
+function socketAddress(){if(!['http:','https:'].includes(location.protocol))throw Error('Ouvre le jeu depuis l’adresse HTTPS de ton portail Render.');return (location.protocol==='https:'?'wss://':'ws://')+location.host+'/splendor-socket';}
+function clearRetry(){if(retryTimer!==null){clearTimeout(retryTimer);retryTimer=null;}}
+function resetConnection(message,keepSession=false){
+ clearRetry();const old=ws;ws=null;role=null;room='';partner=false;gameReady=false;socketReady=false;pending=false;revision=0;opening=false;endingShown=false;initialGameSeen=false;connectedOnce=false;
+ if(!keepSession)writeSession(null);
+ if(old&&old.readyState<2){try{old.close(1000,'Fin de session');}catch(_){}}
+ if(message)status(message);updateUI();
 }
 function showResult(winner,s0,s1){
  if(endingShown)return;endingShown=true;
- const local=role==='guest'?1:0;
- const title=winner===-1?'⚖️ Égalité':winner===local?'🏆 Tu as gagné !':'👤 Défaite';
- const description='Fin de la partie : Joueur 1 '+s0+' points — Joueur 2 '+s1+' points. '+(role==='host'?'Tu peux relancer une nouvelle manche depuis le menu Réseau.':'Demande à l’hôte de lancer une nouvelle manche.');
- status(title+'. '+description);
- if(winner===local&&window.MarvelVictoryScreen?.show){
-  window.MarvelVictoryScreen.show(local===0?s0:s1,local===0?s1:s0,open);
-  const caption=byId('v815VictoryCaption');if(caption)caption.textContent='Score final : Toi '+(local===0?s0:s1)+' ★ — Adversaire '+(local===0?s1:s0)+' ★';
-  byId('v815VictoryOverlay')?.setAttribute('aria-label','Victoire contre l’autre joueur');
- }else if(winner!==-1&&window.MarvelDefeatScreen?.show){
-  window.MarvelDefeatScreen.show(local===0?s0:s1,local===0?s1:s0,open);
-  const caption=byId('v817DefeatCaption');if(caption)caption.textContent='Score final : Toi '+(local===0?s0:s1)+' ★ — Adversaire '+(local===0?s1:s0)+' ★';
-  byId('v817DefeatOverlay')?.setAttribute('aria-label','Défaite contre l’autre joueur');
- }else{open();}
- window.V3FX?.chime?.(winner===local?'victory':'defeat');
+ const me=role==='guest'?1:0;
+ status(`${winner===-1?'⚖️ Égalité':winner===me?'🏆 Tu as gagné !':'👤 Défaite'} · Joueur 1 : ${s0} pts — Joueur 2 : ${s1} pts.`);
+ const callback=()=>open();
+ if(winner===me&&window.MarvelVictoryScreen?.show){window.MarvelVictoryScreen.show(me===0?s0:s1,me===0?s1:s0,callback);}
+ else if(winner!==-1&&window.MarvelDefeatScreen?.show){window.MarvelDefeatScreen.show(me===0?s0:s1,me===0?s1:s0,callback);}
+ else open();
+}
+function outcome(state){
+ if(!state?.end)return;
+ const pts=state.players.map((p,i)=>p.cards.reduce((n,c)=>n+c.points,0)+p.places.length*3+(state.avenger===i?3:0));
+ showResult(Number.isInteger(state.winner)?state.winner:(pts[0]===pts[1]?-1:pts[0]>pts[1]?0:1),pts[0],pts[1]);
+}
+function applyState(state,version){
+ if(!state||!Number.isInteger(version)||version<revision)return false;
+ if(!engine()?.acceptOnlineState?.(state))return false;
+ revision=version;pending=false;gameReady=true;
+ if(!initialGameSeen){window.dispatchEvent(new CustomEvent('marvel-splendor-new-game'));initialGameSeen=true;}
+ if(!state.end){endingShown=false;close();}else outcome(state);
+ updateUI();return true;
+}
+function storeAccess(message,side){
+ role=side;room=message.code;writeSession({code:room,role:side,token:message.token});
+ socketReady=true;opening=false;connectedOnce=true;retryDelay=1200;clearRetry();
+ updateUI();
 }
 function receive(message){
  switch(message.type){
- case 'created':role='host';room=message.code;socketReady=true;status('Salle créée : partage le code '+room+' avec l’autre joueur. En attente de sa connexion…');updateUI();break;
- case 'joined':role='guest';room=message.code;partner=true;socketReady=true;status('Connecté ! En attente du plateau créé par le joueur 1…');updateUI();break;
+ case 'created':storeAccess(message,'host');status('Salle créée : transmets le code '+room+' au joueur 2.');break;
+ case 'joined':storeAccess(message,'guest');partner=false;status('Salle rejointe. Le joueur 1 prépare le plateau…');break;
  case 'guest_joined':
   if(role!=='host')break;
-  partner=true;gameReady=true;initialGameSeen=true;revision=0;pending=false;endingShown=false;
-  status('Joueur 2 connecté. La partie commence !');updateUI();
-  engine()?.startOnlineGame?.(byId('v849Starter').value);
-  close();
+  partner=true;pending=false;
+  if(!gameReady){gameReady=true;initialGameSeen=true;status('Joueur 2 connecté. Début de la partie !');updateUI();engine()?.startOnlineGame?.(byId('v849Starter').value);close();}
+  else {status('Joueur 2 est revenu. Partie reprise.');updateUI();}
   break;
+ case 'peer_status':
+  partner=!!message.connected;
+  if(!partner)status('L’autre joueur est déconnecté. Partie mise en pause jusqu’à son retour.');
+  else if(gameReady)status('Les deux joueurs sont connectés : tu peux jouer.');
+  updateUI();break;
+ case 'resumed':{
+  storeAccess(message,message.role);
+  partner=!!message.peerOnline;
+  if(message.state){if(!applyState(message.state,message.revision)){status('Plateau non reconnu, nouvelle synchronisation demandée.');send({type:'resync'});}}
+  else if(role==='host'){
+   if(partner){gameReady=true;initialGameSeen=true;status('Les deux joueurs sont de retour. Début de la partie !');engine()?.startOnlineGame?.(byId('v849Starter').value);close();}
+   else {gameReady=false;status('Salle retrouvée : en attente du joueur 2.');open();}
+  }
+  else {status('Salle retrouvée : en attente du plateau.');open();}
+  updateUI();break;
+ }
  case 'state':
-  if(role!=='guest')break;
-  if(typeof message.revision!=='number'||message.revision<=revision)break;
-  let applied=false;try{applied=engine()?.acceptOnlineState?.(message.state)===true;}catch(e){console.error('Erreur de synchronisation :',e);}
-  if(!applied){status('⚠️ État réseau invalide : dernier plateau conservé.');send({type:'resync'});break;}
-  revision=message.revision;pending=false;partner=true;socketReady=true;gameReady=true;
-  if(!initialGameSeen){window.dispatchEvent(new CustomEvent('marvel-splendor-new-game'));initialGameSeen=true;}
-  if(!message.state.end){endingShown=false;close();}
-  status('Partie synchronisée · coup '+message.state.moves+'.');updateUI();
-  if(message.state.end){const scores=message.state.players.map(p=>p.cards.reduce((n,c)=>n+c.points,0)+p.places.length*3+(message.state.avenger===message.state.players.indexOf(p)?3:0));const eligible=message.state.players.map((p,i)=>scores[i]>=16&&p.b.every(v=>v>0)&&p.g[6]>0);let winner=Number.isInteger(message.state.winner)?message.state.winner:(eligible[0]&&!eligible[1]?0:eligible[1]&&!eligible[0]?1:scores[0]===scores[1]?-1:scores[0]>scores[1]?0:1);showResult(winner,scores[0],scores[1]);}
+  if(role==='guest'||(!gameReady&&role==='host')){
+   if(!applyState(message.state,message.revision)){status('Synchronisation impossible : nouvelle tentative.');send({type:'resync'});}
+   else status('Plateau synchronisé · coup '+message.state.moves+'.');
+  }
   break;
  case 'action':
-  if(role!=='host'||!partner||!gameReady)break;
+  if(role!=='host'||!partner||!gameReady||!socketReady)break;
   if(message.revision!==revision){send({type:'reject'});break;}
-  const accepted=engine()?.acceptRemoteAction?.(message.action,message.payload)===true;
-  if(!accepted){send({type:'reject'});status('Le moteur a refusé une action invalide de l’autre joueur.');}
+  if(!engine()?.acceptRemoteAction?.(message.action,message.payload)){send({type:'reject'});status('Action adverse refusée par les règles du jeu.');}
   break;
- case 'confirmed':if(role==='host'&&Number.isInteger(message.revision))revision=message.revision;break;
- case 'rejected':pending=false;status(message.message||'Action refusée.');if(role==='guest')send({type:'resync'});break;
- case 'peer_left':resetConnection(message.message||'Le second joueur est parti.');open();break;
- case 'rematch':if(role==='guest'){initialGameSeen=false;endingShown=false;status('Nouvelle manche lancée par le joueur 1…');window.MarvelVictoryScreen?.hide?.();window.MarvelDefeatScreen?.hide?.();}break;
- case 'error':opening=false;status('⚠️ '+(message.message||'Erreur serveur.'));updateUI();break;
- default:break;
+ case 'confirmed':if(role==='host'&&Number.isInteger(message.revision))revision=Math.max(revision,message.revision);break;
+ case 'rejected':pending=false;status(message.message||'Action refusée.');if(role==='guest'&&gameReady)send({type:'resync'});break;
+ case 'rematch':if(role==='guest'){endingShown=false;window.MarvelVictoryScreen?.hide?.();window.MarvelDefeatScreen?.hide?.();status('Le joueur 1 prépare la nouvelle manche…');}break;
+ case 'peer_left':resetConnection(message.message||'La partie est terminée.');open();break;
+ case 'error':
+  opening=false;pending=false;
+  if(/Impossible de retrouver|Code inconnu|partie expirée/i.test(message.message||'')&&readSession()){
+   resetConnection('L’ancienne partie n’existe plus sur Render. Tu peux créer une nouvelle salle.');open();break;
+  }
+  status('⚠️ '+(message.message||'Erreur du serveur.'));
+  if(!role){
+   if(readSession())writeSession(null);
+   clearRetry();
+   const failed=ws;ws=null;socketReady=false;try{failed?.close();}catch(_){}
+  }
+  updateUI();break;
  }
 }
-function connect(mode){
- if(opening||role)return;
- const code=byId('v849RoomInput').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
- if(mode==='join'&&code.length!==6){status('Saisis le code de six caractères reçu de l’hôte.');return;}
- let addr;try{addr=socketAddress();}catch(e){status(e.message);return;}
- opening=true;updateUI();status('Connexion au serveur…');
- const socket=new WebSocket(addr);ws=socket;
- let opened=false;
- socket.onopen=()=>{if(ws!==socket)return;opened=true;opening=false;socketReady=true;updateUI();send(mode==='join'?{type:'join',code}:{type:'create'});};
- socket.onmessage=event=>{if(ws!==socket)return;let data;try{data=JSON.parse(event.data);}catch(_e){return;}receive(data);};
- socket.onerror=()=>{if(ws===socket)status('Connexion impossible. Vérifie que le serveur est allumé et accessible depuis cet ordinateur.');};
- socket.onclose=()=>{if(ws!==socket)return;resetConnection(opened?'Connexion interrompue. La partie réseau est arrêtée.':'Serveur indisponible. Démarre server.js sur le PC hôte.');open();};
+function scheduleReconnect(){
+ if(retryTimer!==null||closingExplicitly||(!role&&!readSession()))return;
+ const pause=retryDelay;retryDelay=Math.min(15000,Math.round(retryDelay*1.65));
+ retryTimer=setTimeout(()=>{retryTimer=null;connect('resume',true);},pause);
 }
-function open(){showDialog=true;overlay.classList.add('open');updateUI();}
-function close(){showDialog=false;overlay.classList.remove('open');}
-networkButton.addEventListener('click',open);
-byId('v849Create').addEventListener('click',()=>connect('create'));
-byId('v849Join').addEventListener('click',()=>connect('join'));
-byId('v849Close').addEventListener('click',close);
-overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
-byId('v849Copy').addEventListener('click',()=>{if(navigator.clipboard?.writeText)navigator.clipboard.writeText(room).then(()=>status('Code copié : '+room)).catch(()=>status('Copie manuelle : '+room));else status('Copie manuelle : '+room);});
-byId('v849Leave').addEventListener('click',()=>{if(!confirm('Quitter la partie réseau ? La session sera arrêtée pour les deux joueurs.'))return;send({type:'leave'});resetConnection('Partie réseau quittée. Pour jouer en solo, démarre une nouvelle partie.');});
-byId('v849Rematch').addEventListener('click',()=>{
- if(role!=='host'||!partner)return;
- send({type:'rematch'});endingShown=false;initialGameSeen=true;
- window.MarvelVictoryScreen?.hide?.();window.MarvelDefeatScreen?.hide?.();
- engine()?.startOnlineGame?.(byId('v849Starter').value||'random');
- close();
-});
-function publish(state){if(role==='host'&&partner&&socketReady&&state?.mode==='online'){send({type:'state',state});}}
-function sendAction(action,payload){if(role!=='guest'||!gameReady||pending||!socketReady||!engine()||engine().turn!==1||engine().ended)return false;
- pending=true;if(!send({type:'action',action,payload,revision})){pending=false;return false;}status('Action envoyée : validation par l’hôte…');return true;
+function connect(mode,isRetry=false){
+ if(opening||ws?.readyState===WebSocket.CONNECTING||ws?.readyState===WebSocket.OPEN)return;
+ if(mode==='resume'&&!readSession()){status('Aucune partie à reprendre sur cet appareil.');return;}
+ if(mode!=='resume'&&role)return;
+ const code=byId('v849RoomInput').value.trim().toUpperCase().replace(/[^A-F0-9]/g,'');
+ if(mode==='join'&&code.length!==6){status('Le code doit contenir six caractères de 0 à 9 ou A à F.');return;}
+ let addr;try{addr=socketAddress();}catch(e){status(e.message);return;}
+ clearRetry();opening=true;updateUI();if(!isRetry)status(mode==='resume'?'Reprise de la partie…':'Connexion au portail…');
+ const socket=new WebSocket(addr);ws=socket;
+ socket.onopen=()=>{
+  if(ws!==socket)return;
+  opening=false;socketReady=true;updateUI();
+  const s=readSession();send(mode==='resume'?{type:'resume',...s}:mode==='join'?{type:'join',code}:{type:'create'});
+ };
+ socket.onmessage=e=>{if(ws!==socket)return;try{receive(JSON.parse(e.data));}catch(err){console.error('Message Splendor :',err);}};
+ socket.onerror=()=>{if(ws===socket&&!isRetry)status('Connexion impossible. Vérifie que le portail est accessible.');};
+ socket.onclose=e=>{
+  if(ws!==socket)return;
+  ws=null;opening=false;socketReady=false;partner=false;pending=false;updateUI();
+  if(closingExplicitly){closingExplicitly=false;return;}
+  if(e.code===4001){resetConnection('Cette partie est ouverte dans un autre onglet.');return;}
+  if(role||readSession()){
+   status('Connexion perdue. Reconnexion automatique en cours…');scheduleReconnect();
+  }else{status('Serveur indisponible. Vérifie ton portail Render.');open();}
+ };
+}
+function open(){overlay.classList.add('open');updateUI();}
+function close(){overlay.classList.remove('open');}
+networkButton.onclick=open;
+byId('v849Create').onclick=()=>connect('create');
+byId('v849Join').onclick=()=>connect('join');
+byId('v849Resume').onclick=()=>connect('resume');
+byId('v849Close').onclick=close;
+overlay.onclick=e=>{if(e.target===overlay)close();};
+byId('v849Copy').onclick=()=>{
+ if(navigator.clipboard?.writeText)navigator.clipboard.writeText(room).then(()=>status('Code copié : '+room)).catch(()=>status('Copie manuelle : '+room));
+ else status('Sélectionne et copie le code : '+room);
+};
+function leave(){
+ closingExplicitly=true;send({type:'leave'});resetConnection('Partie quittée. Pour jouer contre Ultron, démarre une nouvelle partie.');closingExplicitly=false;
+}
+byId('v849Leave').onclick=()=>{if(confirm('Quitter définitivement ? Le code sera invalidé et l’autre joueur quittera également la partie.'))leave();};
+byId('v849Rematch').onclick=()=>{
+ if(role!=='host'||!partner||!socketReady||!gameReady)return;
+ send({type:'rematch'});endingShown=false;window.MarvelVictoryScreen?.hide?.();window.MarvelDefeatScreen?.hide?.();
+ engine()?.startOnlineGame?.(byId('v849Starter').value||'random');close();
+};
+function publish(state){if(role==='host'&&partner&&socketReady&&state?.mode==='online')send({type:'state',state});}
+function sendAction(action,payload){
+ if(role!=='guest'||!gameReady||pending||!partner||!socketReady||engine()?.turn!==1||engine()?.ended)return false;
+ pending=true;if(!send({type:'action',action,payload,revision})){pending=false;return false;}
+ status('Coup envoyé au joueur 1 pour validation…');return true;
 }
 function canAct(){return !!(role&&partner&&gameReady&&socketReady&&!pending);}
-window.MarvelNetwork={open,leave:()=>{send({type:'leave'});resetConnection('Partie réseau terminée.');},connected:()=>!!role,isHost:()=>role==='host'&&partner&&socketReady,localIndex:()=>role==='guest'?1:0,canAct,publish,sendAction,showResult,get role(){return role;},get code(){return room;}};
+window.MarvelNetwork={open,leave,connected:()=>!!role,isHost:()=>role==='host'&&partner&&socketReady,localIndex:()=>role==='guest'?1:0,canAct,publish,sendAction,showResult,get role(){return role;},get code(){return room;}};
 updateUI();
+// Au rechargement d'un onglet : restaurer uniquement une ancienne partie réseau explicite.
+if(readSession())connect('resume',true);
 })();
 </script>
 
