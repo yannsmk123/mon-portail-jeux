@@ -4,6 +4,7 @@ const {fromUpload,packZip,pathSafe,MAX_ARCHIVE}=require('./zip-games');
 const {server:marvelServer}=require('./marvel/server');
 // Lost Cities rejoint le serveur HTTP EXISTANT : aucun deuxième port ou service Render.
 const {server:lostCitiesServer}=require('./lost-cities-online/server');
+const {installSplendorOnline}=require('./splendor-online/server');
 const lostCitiesHandler=lostCitiesServer.listeners('request')[0];
 const PORT=Number(process.env.PORT||3000);
 const ROOT=__dirname,UPLOADS=path.join(ROOT,'uploads');
@@ -423,6 +424,7 @@ if(req.method==='GET'&&pn.startsWith('/games/')){
    return respond(res,404,'Page introuvable.','text/plain; charset=utf-8');
  }catch(e){console.error('Erreur portail:',e.message);if(!res.headersSent)json(res,e.status||((e.message.includes('volumineux')||e.message.includes('dépasse 20 Mo'))?413:400),{error:e.message||'Erreur du serveur.'})}
 });
+installSplendorOnline(server,userAllowed);
 if(require.main===module)require('./uno-server/native').installUnoNative(server,userAllowed).then(()=>server.listen(PORT,'0.0.0.0',()=>{
  console.log(`\n🎮 PORTAIL DE JEUX — http://localhost:${PORT}`);
  console.log(`   ${catalog.size} jeu(x) disponibles. MARVEL FUSION : /games/marvel-fusion/`);
