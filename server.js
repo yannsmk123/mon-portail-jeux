@@ -86,11 +86,13 @@ if(fs.existsSync(splendorIndex)){
 // passe uniquement par /api/lost-cities/* et ne touche jamais aux routes MARVEL.
 const LOST_CITIES_ID='lost-cities-duel';
 const lostIndex=path.join(ROOT,'lost-cities-online','index.html');
+const lostMediaPack=path.join(ROOT,'lost-cities-online','media-pack.json');
+if(!fs.existsSync(lostMediaPack))errors.push('lost-cities-online/media-pack.json absent : illustrations personnalisées non publiées.');
 if(fs.existsSync(lostIndex)){
  const settings=presets[LOST_CITIES_ID]||{};
  catalog.set(LOST_CITIES_ID,{
   id:LOST_CITIES_ID,
-  files:new Map([['index.html',fs.readFileSync(lostIndex)]]),
+  files:new Map([['index.html',fs.readFileSync(lostIndex)],...(fs.existsSync(lostMediaPack)?[['media-pack.json',fs.readFileSync(lostMediaPack)]]:[])]),
   title:settings.title||'LOST CITIES DUEL — FUSION',
   description:settings.description||'Explore six expéditions en solo contre l’IA, à deux sur le même écran ou avec un ami en ligne.',
   category:settings.category||'Cartes & stratégie',
@@ -415,7 +417,7 @@ if(req.method==='GET'&&pn.startsWith('/games/')){
      if(!content)return respond(res,404,'Fichier introuvable : '+filepath,'text/plain; charset=utf-8');
      if(/(^|\/)(server\.js|package(-lock)?\.json|LANCER_WINDOWS\.bat)$/i.test(filepath)||filepath.startsWith('tests/'))return respond(res,404,'Fichier non publié.','text/plain; charset=utf-8');
      const type=mime[path.extname(filepath).toLowerCase()]||'application/octet-stream';
-     return respond(res,200,content,type,{'Cache-Control':(filepath==='index.html'||filepath==='version.txt'||filepath==='medias-par-defaut-version.json'||filepath.startsWith('medias/'))?'no-store':'public, max-age=300','Cross-Origin-Resource-Policy':'same-origin'});
+     return respond(res,200,content,type,{'Cache-Control':(filepath==='index.html'||filepath==='media-pack.json'||filepath==='version.txt'||filepath==='medias-par-defaut-version.json'||filepath.startsWith('medias/'))?'no-store':'public, max-age=300','Cross-Origin-Resource-Policy':'same-origin'});
    }
    // API de MARVEL FUSION conservée, même logique de jeu en local et à distance.
    if(pn.startsWith('/api/') || ['/solo','/solo.html','/jeu','/play','/diagnostic','/favicon.ico'].includes(pn)){
