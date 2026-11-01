@@ -1217,7 +1217,10 @@ function animateDrawIntoHand(card,sourceRect){
 function makeDeck(expeditionCount=state?.expeditionCount||6){let d=[];for(const c of activeExpeditionIndices(expeditionCount)){for(let v=2;v<=10;v++)d.push({id:`${c}-v${v}`,c,v,bet:false});for(let b=0;b<3;b++)d.push({id:`${c}-r${b}`,c,v:0,bet:true})}for(let i=d.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]]}return d}
 function dealRound(expeditionCount=state?.expeditionCount||6){let d=makeDeck(expeditionCount),hands=[[],[]];for(let i=0;i<8;i++){hands[0].push(d.pop());hands[1].push(d.pop())}return {deck:d,hands}}
 function initGame(mode,rounds,oldest,expeditionCount=6){
- if(networkSession)leaveNetwork(false);
+ if(networkSession){
+  if(!confirm('Démarrer une partie solo ou locale quittera le salon en ligne sur cet appareil. Continuer ?'))return;
+  leaveNetwork(false);
+ }
  const chosenCount=Number(expeditionCount)===5?5:6;
  const resolvedOldest=oldest==='random'?(Math.random()<.5?0:1):(Number(oldest)===1?1:0);
  clearTimeout(aiTimer);let {deck,hands}=dealRound(chosenCount);state={version:6,deck78:false,expeditionCount:chosenCount,mode,rounds:Number(rounds)===3?3:1,round:1,
@@ -1662,7 +1665,7 @@ else if(type==='result'){
  const row=activeExpeditionIndices().map(i=>`<tr><td>${esc(getName(i))}</td><td>${expScore(state.players[0].exp[i])}</td><td>${expScore(state.players[1].exp[i])}</td></tr>`).join('');
  content=`<div class="result-hero">${state.final?(victory?'🏆 VICTOIRE !':state.mode==='ai'?'⚔️ DÉFAITE':'🏆 VICTOIRE DU JOUEUR 2 !'):'✨ FIN DE LA PARTIE'}</div>
  <p style="text-align:center">${state.final?`<b>${esc(state.players[winner].name)}</b> remporte le duel !${totals[0]===totals[1]?' (égalité départagée par le plus jeune)':''}`:`Bilan de la partie ${state.round}/${state.rounds}.`}</p>
- <table class="scoretable"><thead><tr><th>Expédition</th><th>Explorateur 1</th><th>${state.mode==='ai'?'IA':'Explorateur 2'}</th></tr></thead><tbody>${row}
+ <table class="scoretable"><thead><tr><th>Expédition</th><th>${state.mode==='network'?esc(state.players[0].name):'Explorateur 1'}</th><th>${state.mode==='network'?esc(state.players[1].name):state.mode==='ai'?'IA':'Explorateur 2'}</th></tr></thead><tbody>${row}
  <tr class="total"><td>Score de cette partie</td><td>${scores[0]}</td><td>${scores[1]}</td></tr>${state.rounds===3?`<tr class="total"><td>Total cumulé</td><td>${totals[0]}</td><td>${totals[1]}</td></tr>`:''}</tbody></table>
  <div class="buttons" style="justify-content:center">${!state.final?'<button class="btn primary" id="nextRound">▶ Partie suivante</button>':'<button class="btn primary" id="rematch">↻ Rejouer</button>'}<button class="btn" data-modal="history">📜 Journal</button><button class="btn ghost" data-close>Voir le plateau</button></div>`;
  if(pref.animations&&state.final)setTimeout(()=>particles($('dialog'),60),120)
@@ -1942,6 +1945,7 @@ function networkModalHtml(){
   <label>Expéditions <select id="networkExp"><option value="6">6 expéditions</option><option value="5">5 expéditions (sans Friends)</option></select></label>
   <label>Manches <select id="networkRounds"><option value="1">1 manche</option><option value="3">3 manches</option></select></label>
   <label>Qui commence ? <select id="networkFirst"><option value="random">Aléatoire</option><option value="0">Joueur 1</option><option value="1">Joueur 2</option></select></label>
+  <label>En cas d’égalité, qui est le plus jeune ? <select id="networkYoungest"><option value="0">Joueur 1</option><option value="1">Joueur 2</option></select></label>
   <button class="btn primary" id="networkCreate">Créer un salon</button></section>
   <section><h3>Rejoindre un ami</h3><label>Ton pseudonyme <input type="text" id="networkGuestName" maxlength="24" value="Explorateur 2"></label>
   <label>Code du salon <input type="text" id="networkJoinCode" maxlength="6" placeholder="A1B2C3" value="${esc(new URLSearchParams(location.search).get('salon')||'')}" autocomplete="off" spellcheck="false"></label>
@@ -1963,7 +1967,8 @@ async function networkFetch(route,body,auth=false){
 }
 function networkAttach(response){
  networkSession={code:response.code,token:response.token,seat:response.seat};
- localStorage.setItem(NETWORK_STORAGE,JSON.stringify(networkSession));
+ try{localStorage.setItem(NETWORK_STORAGE,JSON.stringify(networkSession))}
+ catch(_){notify('Sauvegarde du salon impossible dans ce navigateur : ne ferme pas cet onglet si tu veux garder ta place.','lose')}
  networkRevision=0;networkConnected=true;networkResultShown='';lastNetworkView=response.view;networkApplyView(response.view,true);
  networkLoop();
 }
@@ -1975,7 +1980,7 @@ function networkUpdateBanner(view){
  const info=$('networkRoomInfo');if(info)info.textContent=view?.status==='waiting'?'En attente de l’autre joueur…':connected[other]?'Les deux joueurs sont connectés.':'L’autre joueur est déconnecté ; sa place reste réservée.';
 }
 function networkApplyView(view,first=false){
- if(!networkSession||!view)return;
+ if(!networkSession||!view||view.code!==networkSession.code||view.seat!==networkSession.seat)return;
  networkConnected=true;
  networkUpdateBanner(view);
  if(view.revision<=networkRevision&&!first)return;
@@ -2001,13 +2006,15 @@ function networkApplyView(view,first=false){
 let lastNetworkView=null;
 async function networkPoll(){
  if(!networkSession||networkPollPending)return;
+ const requestedSession=networkSession;
  networkPollPending=true;
  try{
   const response=await networkFetch(`/api/state?revision=${networkRevision}`,undefined,true);
+  if(networkSession!==requestedSession)return; // Réponse d'un ancien salon.
   const wasOffline=!networkConnected;networkConnected=true;
   if(response.view){lastNetworkView=response.view;networkApplyView(response.view)}
   else if(lastNetworkView){lastNetworkView.connected=response.connected;networkUpdateBanner(lastNetworkView);if(wasOffline&&state?.mode==='network')render()}
- }catch(e){networkConnected=false;const banner=$('networkStatus');if(banner){banner.hidden=false;banner.textContent=e.message.includes('Salon introuvable')||e.message.includes('jeton de joueur invalide')?'🌐 Salon indisponible (serveur redémarré ou partie effacée). Ouvre « 2 joueurs en ligne », puis « Quitter le salon » pour en créer un nouveau.':'🌐 Connexion interrompue — reconnexion automatique en cours…'};if(state?.mode==='network')render()}
+ }catch(e){if(networkSession!==requestedSession)return;networkConnected=false;const banner=$('networkStatus');if(banner){banner.hidden=false;banner.textContent=e.message.includes('Salon introuvable')||e.message.includes('jeton de joueur invalide')?'🌐 Salon indisponible (serveur redémarré ou partie effacée). Ouvre « 2 joueurs en ligne », puis « Quitter le salon » pour en créer un nouveau.':'🌐 Connexion interrompue — reconnexion automatique en cours…'};if(state?.mode==='network')render()}
  finally{networkPollPending=false}
 }
 function networkLoop(){clearInterval(networkPollTimer);networkPollTimer=setInterval(networkPoll,900);void networkPoll()}
@@ -2024,7 +2031,7 @@ async function networkAction(action){
 function leaveNetwork(close=true){
  clearInterval(networkPollTimer);networkPollTimer=null;
  networkSession=null;networkRevision=0;networkBusy=false;networkConnected=false;lastNetworkView=null;
- localStorage.removeItem(NETWORK_STORAGE);
+ try{localStorage.removeItem(NETWORK_STORAGE)}catch(_){}
  const banner=$('networkStatus');if(banner)banner.hidden=true;
  if(state?.mode==='network')state=load(KEY,null);
  if(close){closeModal(true);render();openModal('home')}
@@ -2032,7 +2039,7 @@ function leaveNetwork(close=true){
 function bindNetworkModal(panel){
  panel.querySelector('#networkCreate')?.addEventListener('click',async()=>{
   const button=$('networkCreate');button.disabled=true;
-  try{const response=await networkFetch('/api/create',{name:$('networkHostName').value,expeditionCount:Number($('networkExp').value),rounds:Number($('networkRounds').value),first:$('networkFirst').value==='random'?'random':Number($('networkFirst').value)});
+  try{const response=await networkFetch('/api/create',{name:$('networkHostName').value,expeditionCount:Number($('networkExp').value),rounds:Number($('networkRounds').value),first:$('networkFirst').value==='random'?'random':Number($('networkFirst').value),youngest:Number($('networkYoungest').value)});
    networkAttach(response);openModal('network');networkMessage(`Salon ${response.code} créé. Envoie ce code au deuxième joueur.`)
   }catch(e){networkMessage(e.message);button.disabled=false}
  });
@@ -2042,8 +2049,12 @@ function bindNetworkModal(panel){
    networkAttach(response)
   }catch(e){networkMessage(e.message);button.disabled=false}
  });
- panel.querySelector('#networkCopyCode')?.addEventListener('click',()=>{if(networkSession){navigator.clipboard?.writeText(networkSession.code).then(()=>networkMessage('Code copié !')).catch(()=>networkMessage('Code : '+networkSession.code))}});
- panel.querySelector('#networkCopyLink')?.addEventListener('click',()=>{if(!networkSession)return;const invite=new URL(location.href);invite.search='';invite.hash='';invite.searchParams.set('salon',networkSession.code);navigator.clipboard?.writeText(invite.href).then(()=>networkMessage('Lien d’invitation copié !')).catch(()=>networkMessage('Lien : '+invite.href))});
+ const copyInvite=async(value,label)=>{
+  try{if(!navigator.clipboard?.writeText)throw Error('Presse-papiers indisponible');await navigator.clipboard.writeText(value);networkMessage(label+' copié !')}
+  catch(_){networkMessage(label+' : '+value+' (sélectionne puis copie ce texte)')}
+ };
+ panel.querySelector('#networkCopyCode')?.addEventListener('click',()=>{if(networkSession)void copyInvite(networkSession.code,'Code')});
+ panel.querySelector('#networkCopyLink')?.addEventListener('click',()=>{if(!networkSession)return;const invite=new URL(location.href);invite.search='';invite.hash='';invite.searchParams.set('salon',networkSession.code);void copyInvite(invite.href,'Lien d’invitation')});
  panel.querySelector('#networkLeave')?.addEventListener('click',()=>{
   if(confirm('Quitter cette partie en réseau ? Tu pourras la rejoindre uniquement en conservant ton code et ta session.'))leaveNetwork(true)
  });
@@ -2053,6 +2064,8 @@ function networkRestore(){if(networkSession){const banner=$('networkStatus');if(
 
 restoreArtConfig();applyPrefs();renderExpeditionLegend();artStoreStartup=initArtworkDatabase();try{if(localStorage.getItem('lost_cities_nav_hidden')==='1')document.body.classList.add('nav-hidden')}catch(_){/* navigateur sans accès au stockage */}bindEvents();$('navToggle').setAttribute('aria-expanded',String(!document.body.classList.contains('nav-hidden')));if(state){render();openModal('home')}else{state=null;openModal('home')}
 networkRestore();
+window.addEventListener('online',()=>{if(networkSession)void networkPoll()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&networkSession)void networkPoll()});
 // Un lien partagé ?salon=CODE ouvre directement le formulaire de jonction.
 if(!networkSession && /^[A-F0-9]{6}$/i.test(new URLSearchParams(location.search).get('salon')||''))openModal('network');
 })();

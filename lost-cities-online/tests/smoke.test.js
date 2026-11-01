@@ -67,10 +67,29 @@ async function main(){
  check(end.view.state.ended===true&&end.view.state.scoreHistory.length===1,'Fin de manche et scores validés');
  x=await call(url,'/api/action',{code,type:'nextRound'},tokB);
  check(x.status===200&&x.view.state.round===2&&x.view.state.players[0].hand.length===8,'La manche suivante démarre sans perte des scores');
- const other=await call(url,'/api/create',{name:'Charles',expeditionCount:6,rounds:1,first:'random'});
+ const other=await call(url,'/api/create',{name:'Charles',expeditionCount:6,rounds:1,first:'random',youngest:1});
  check(other.status===201,'Salons multiples et six expéditions');
  let join=await call(url,'/api/join',{name:'Dana',code:other.code});
  check(join.view.state.expeditionCount===6&&join.view.state.deck.length===56,'6 expéditions : 56 cartes de pioche');
+ check(join.view.state.oldest===0,'Le joueur 2 est le plus jeune, quelle que soit la personne qui commence');
+ const charles=await call(url,'/api/state',undefined,other.token,other.code);
+ check(charles.view.state.oldest===1,'Le départage est symétrique : seul le joueur 2 est désigné par les deux appareils');
+ // Égalité au score final : chaque joueur défausse toutes ses cartes, sans lancer d'expédition.
+ // Un départ aléatoire ne doit surtout pas donner deux vainqueurs différents.
+ for(let i=0;i<56;i++){
+  const current=await call(url,'/api/state',undefined,other.token,other.code);
+  const seat=current.view.state.turn===0?0:1;
+  const who=seat===0?other.token:join.token;
+  const drawn=await call(url,'/api/action',{code:other.code,type:'draw',from:'deck'},who,other.code);
+  assert.equal(drawn.status,200,'Pioche de la manche à égalité : '+i);
+  const discarded=await call(url,'/api/action',{code:other.code,type:'play',action:'discard',id:drawn.view.state.players[0].hand[0].id},who,other.code);
+  assert.equal(discarded.status,200,'Défausse de la manche à égalité : '+i);
+ }
+ const final1=await call(url,'/api/state',undefined,other.token,other.code);
+ const final2=await call(url,'/api/state',undefined,join.token,other.code);
+ check(final1.view.state.ended&&final2.view.state.ended,'Les deux joueurs voient la fin de la partie');
+ check(final1.view.state.scoreHistory[0][0]===0&&final1.view.state.scoreHistory[0][1]===0,'Tous les scores sont égaux (0 / 0)');
+ check(final1.view.state.oldest===1&&final2.view.state.oldest===0,'En cas d’égalité le joueur 2 est l’unique vainqueur');
  console.log('\nTous les tests ont réussi.');
 }
 main().catch(e=>{console.error(e);process.exitCode=1}).finally(()=>{if(server)server.kill();fs.rmSync(tmp,{recursive:true,force:true})});

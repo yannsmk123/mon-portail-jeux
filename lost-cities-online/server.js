@@ -72,6 +72,7 @@ function persist(){
 }
 try{for(const room of JSON.parse(fs.readFileSync(DATA_FILE,'utf8'))){if(room?.code&&Array.isArray(room.players)){
   for(const p of room.players)p.lastSeen=0;
+  if(room.youngest!==0&&room.youngest!==1)room.youngest=room.first===1?1:0; // Salons V107 déjà créés.
   ROOMS.set(room.code,room)
  }}}catch(e){if(e.code!=='ENOENT')console.warn('Sauvegarde non chargée:',e.message)}
 function view(room,seat){
@@ -84,7 +85,8 @@ function view(room,seat){
  if(room.status!=='playing'||room.players.length<2)return data;
  const p=room.players[seat],other=room.players[opp];
  data.state={version:6,mode:'network',expeditionCount:room.expeditionCount,rounds:room.rounds,round:room.round,
-  oldest:room.first==='random'?0:(room.first===seat?0:1),turn:room.turn===seat?0:1,phase:room.phase,
+  // Une égalité doit donner le MÊME vainqueur aux deux appareils, même si le départ était aléatoire.
+  oldest:(room.youngest===1?1:0)===seat?0:1,turn:room.turn===seat?0:1,phase:room.phase,
   deck:Array(room.deck.length).fill(null),players:[{name:p.name,hand:p.hand,exp:p.exp},{name:other.name,hand:Array(other.hand.length).fill(null),exp:other.exp}],
   discards:room.discards,blockedDiscard:-1,lastDeckDraw:room.lastDeckDraw,logs:room.logs,lastAiPlayed:null,
   turns:room.turns,ended:room.ended,awaitPass:false,scoreHistory:room.scoreHistory.map(s=>[s[seat],s[opp]]),final:room.final
@@ -180,7 +182,9 @@ const server=http.createServer(async(req,res)=>{
     if(ROOMS.size>=MAX_ROOMS)return error(res,429,'Trop de salons ouverts.');
     let code;do{code=randomCode()}while(ROOMS.has(code));
     const tk=token();const room={code,revision:1,status:'waiting',created:Date.now(),expeditionCount:b.expeditionCount===5?5:6,rounds:b.rounds===3?3:1,
-      first:b.first==='random'?'random':b.first===1?1:0,players:[{name:safeName(b.name),token:tk,lastSeen:Date.now()}]};
+      first:b.first==='random'?'random':b.first===1?1:0,
+      // Le départ et le départage des égalités sont deux choix indépendants.
+      youngest:b.youngest===1?1:0,players:[{name:safeName(b.name),token:tk,lastSeen:Date.now()}]};
     ROOMS.set(code,room);persist();return send(res,201,{ok:true,code,token:tk,seat:0,view:view(room,0)});
    }
    if(req.method==='POST'&&url.pathname==='/api/join'){
