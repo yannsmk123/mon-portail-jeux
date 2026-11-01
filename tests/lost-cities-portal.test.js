@@ -37,6 +37,14 @@ test('Portail actuel + Marvel + Lost Cities en ligne sur un seul service HTTP',a
   const lost=await fetch(base+'/games/lost-cities-duel/');const html=await lost.text();
   check(lost.status===200&&html.includes('Solo contre IA')&&html.includes('2 joueurs en ligne'),'Lost Cities solo et bouton réseau accessibles');
   check(html.includes("fetch('/api/lost-cities'+route.slice(4),opt)"),'Le jeu utilise le préfixe API dédié');
+  // Le JSON est présent sur le portail Render, relu sans cache et complet.
+  for(let visit=0;visit<2;visit++){
+   const mediaResponse=await fetch(base+'/games/lost-cities-duel/media-pack.json?check='+visit,{cache:'no-store'});
+   check(mediaResponse.status===200&&mediaResponse.headers.get('cache-control')==='no-store','Pack Lost Cities publié sans cache');
+   const media=await mediaResponse.json();
+   check(media.format==='lost-cities-media-pack-v1'&&Object.keys(media.images.cards).length===72&&media.images.scenes.length===6,'Les 72 cartes et les 6 images sont dans le JSON');
+   check(Object.keys(media.sfx).length===9&&media.music&&Array.isArray(media.music.tracks),'SFX et musiques prévus dans le JSON');
+  }
   const leak=await fetch(base+'/games/lost-cities-duel/server.js');check(leak.status===404,'Le code du serveur Lost Cities n’est pas public');
   const dataUrl=await fetch(base+'/games/lost-cities-duel/data/parties.json');check(dataUrl.status===404,'Les secrets des parties ne sont pas publics');
   const alien=await fetch(base+'/api/lost-cities/create',{method:'POST',headers:{'Content-Type':'application/json','Origin':'https://evil.example'},body:'{}'});

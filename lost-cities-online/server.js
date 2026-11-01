@@ -210,10 +210,10 @@ const server=http.createServer(async(req,res)=>{
    return error(res,404,'Route inconnue.');
   }
   if(req.method!=='GET'&&req.method!=='HEAD')return error(res,405,'Méthode non autorisée.');
-  const files={'/':'index.html','/index.html':'index.html'};
+  const files={'/':'index.html','/index.html':'index.html','/media-pack.json':'media-pack.json'};
   const file=files[url.pathname];if(!file)return error(res,404,'Fichier introuvable.');
   const data=fs.readFileSync(path.join(__dirname,file));
-  res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin','X-Frame-Options':'DENY'});
+  res.writeHead(200,{'Content-Type':file.endsWith('.json')?'application/json; charset=utf-8':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin','X-Frame-Options':'DENY'});
   res.end(req.method==='HEAD'?undefined:data);
  }catch(e){console.error(e?.message||e);error(res,400,e.message||'Erreur du serveur.')}});
 // Démarrage direct possible pour les tests autonomes, mais aucun port supplémentaire
