@@ -5862,6 +5862,9 @@ overlay.innerHTML=`<section id="v849NetworkDialog" role="dialog" aria-modal="tru
 document.body.append(overlay);
 let ws=null,role=null,room='',partner=false,gameReady=false,socketReady=false,pending=false,revision=0,opening=false;
 let endingShown=false,initialGameSeen=false,retryTimer=null,retryDelay=1200,connectedOnce=false,closingExplicitly=false;
+// Les contrôles sont recalculés quand une connexion, un tour en attente ou un plateau devient jouable.
+// Important : le premier rendu du plateau distant arrive AVANT gameReady=true.
+let lastInteractiveState=null;
 const status=text=>{byId('v849NetStatus').textContent=String(text);};
 function updateUI(){
  const active=!!role,session=readSession();
@@ -5885,6 +5888,14 @@ function updateUI(){
   if(first)first.textContent='🧑 MES CARTES RECRUTÉES';if(second)second.textContent='🤖 CARTES RECRUTÉES PAR ULTRON';
   if(labels[0]?.firstChild)labels[0].firstChild.textContent='🛡️ Réserve Ultron';
   if(labels[1]?.firstChild)labels[1].firstChild.textContent='🛡️ Ma réserve';
+ }
+ // Les boutons de gemmes/cartes sont créés avec disabled pendant la première
+ // synchronisation du joueur 2. Un badge mis à jour ne les réactive pas :
+ // relancer uniquement le rendu lors d'un changement d'état réseau réel.
+ const interactiveState=[role||'',partner,gameReady,socketReady,pending].join('|');
+ if(interactiveState!==lastInteractiveState){
+  lastInteractiveState=interactiveState;
+  if(engine()?.mode==='online')window.refreshGameBoard?.();
  }
 }
 function send(message){if(!ws||ws.readyState!==WebSocket.OPEN)return false;try{ws.send(JSON.stringify(message));return true;}catch(_){return false;}}
@@ -5961,7 +5972,7 @@ function receive(message){
   if(!engine()?.acceptRemoteAction?.(message.action,message.payload)){send({type:'reject'});status('Action adverse refusée par les règles du jeu.');}
   break;
  case 'confirmed':if(role==='host'&&Number.isInteger(message.revision))revision=Math.max(revision,message.revision);break;
- case 'rejected':pending=false;status(message.message||'Action refusée.');if(role==='guest'&&gameReady)send({type:'resync'});break;
+ case 'rejected':pending=false;status(message.message||'Action refusée.');updateUI();if(role==='guest'&&gameReady)send({type:'resync'});break;
  case 'rematch':if(role==='guest'){endingShown=false;window.MarvelVictoryScreen?.hide?.();window.MarvelDefeatScreen?.hide?.();status('Le joueur 1 prépare la nouvelle manche…');}break;
  case 'peer_left':resetConnection(message.message||'La partie est terminée.');open();break;
  case 'error':
@@ -6033,7 +6044,8 @@ byId('v849Rematch').onclick=()=>{
 function publish(state){if(role==='host'&&partner&&socketReady&&state?.mode==='online')send({type:'state',state});}
 function sendAction(action,payload){
  if(role!=='guest'||!gameReady||pending||!partner||!socketReady||engine()?.turn!==1||engine()?.ended)return false;
- pending=true;if(!send({type:'action',action,payload,revision})){pending=false;return false;}
+ pending=true;updateUI();
+ if(!send({type:'action',action,payload,revision})){pending=false;updateUI();return false;}
  status('Coup envoyé au joueur 1 pour validation…');return true;
 }
 function canAct(){return !!(role&&partner&&gameReady&&socketReady&&!pending);}
