@@ -2993,7 +2993,7 @@ function trim(p,ix){
   if(target===undefined)break;
   p.g[target]--;game.bank[target]++;returned++;
  }
- if(returned)note((ix===0?'Tu rends ':'Ultron rend ')+returned+' pierre'+(returned>1?'s':'')+' à la réserve (maximum 10 pierres classiques).');
+ if(returned)note((game.mode==='online'?'Joueur '+(ix+1)+' rend ':(ix===0?'Tu rends ':'Ultron rend '))+returned+' pierre'+(returned>1?'s':'')+' à la réserve (maximum 10 pierres classiques).');
  return returned;
 }
 let aiTimer=null,aiScheduledAt=0;
@@ -3236,9 +3236,9 @@ function isValidOnlineState(st){
  const counts=(v,n)=>Array.isArray(v)&&v.length===n&&v.every(x=>integer(x));
  const card=c=>object(c)&&typeof c.name==='string'&&c.name.length>0&&c.name.length<=250&&integer(c.tier,3)&&c.tier>=1&&integer(c.points,100)&&integer(c.bonus,4)&&integer(c.av??0,2)&&counts(c.cost,5);
  const cards=(items,limit)=>Array.isArray(items)&&items.length<=limit&&items.every(card);
- const player=p=>object(p)&&counts(p.g,7)&&counts(p.b,5)&&cards(p.cards,500)&&cards(p.reserved,3)&&Array.isArray(p.places)&&p.places.length<=100&&p.places.every(x=>typeof x==='string');
+ const player=p=>object(p)&&counts(p.g,7)&&p.g.slice(0,6).reduce((a,b)=>a+b,0)<=10&&counts(p.b,5)&&cards(p.cards,500)&&cards(p.reserved,3)&&Array.isArray(p.places)&&p.places.length<=100&&p.places.every(x=>typeof x==='string');
  return object(st)&&st.mode==='online'&&Array.isArray(st.players)&&st.players.length===2&&st.players.every(player)&&
- counts(st.bank,7)&&Array.isArray(st.market)&&st.market.length===3&&st.market.every(row=>Array.isArray(row)&&row.length===5&&row.every(c=>c===null||card(c)))&&
+ counts(st.bank,7)&&[4,4,4,4,4,5,20].every((total,i)=>st.bank[i]+st.players[0].g[i]+st.players[1].g[i]===total)&&Array.isArray(st.market)&&st.market.length===3&&st.market.every(row=>Array.isArray(row)&&row.length===5&&row.every(c=>c===null||card(c)))&&
  Array.isArray(st.decks)&&st.decks.length===3&&st.decks.every(row=>cards(row,500))&&
  Array.isArray(st.locations)&&st.locations.length<=100&&st.locations.every(l=>object(l)&&typeof l.name==='string'&&l.name.length<=250&&counts(l.req,5)&&[-1,0,1].includes(l.owner))&&
  [-1,0,1].includes(st.turn)&&[0,1].includes(st.firstPlayer)&&[-1,0,1].includes(st.avenger)&&integer(st.moves,100000)&&
@@ -3371,7 +3371,7 @@ function chooseDifficulty(){
 
 $('takeBtn').onclick=()=>{if(takeValid(selection,localIx())){let a=[...selection];selection=[];performLocal('take',{colors:a})}};$('clearBtn').onclick=()=>{selection=[];renderBank()};$('rulesBtn').onclick=()=>showModal('🎮 Comment jouer ?',`
 <div class="easy-rules">
-  <p class="easy-rules-intro">🦸 <b>Ta mission :</b> construire une super-équipe de héros et battre <b>Ultron</b> !</p>
+  <p class="easy-rules-intro">🦸 <b>Ta mission :</b> construire une super-équipe de héros et battre <b>${game?.mode==='online'?'ton adversaire':'Ultron'}</b> !</p>
   <div class="easy-rules-section"><h3>🔁 1. Quand c'est ton tour</h3>
     <p>Choisis <b>UNE seule action</b> :</p>
     <div class="easy-rules-options">
@@ -4376,26 +4376,27 @@ new MutationObserver(()=>{if(!overlay.classList.contains('open'))reset()}).obser
 (()=>{'use strict';
 const root=document.documentElement;
 const colors=['#ed6768','#55bfff','#f7d674','#a77be9','#6bdd99'];
-const names=['Rouge','Bleu','Jaune','Violet','Vert'];
+const names=['Rouge','Bleu','Jaune','Violet','Orange'];
 const guide=document.createElement('div');guide.id='v749-gem-hint';guide.setAttribute('role','status');document.body.append(guide);
 let active=null;
 function clear(){document.querySelectorAll('.v749-needed,.v749-short').forEach(el=>el.classList.remove('v749-needed','v749-short'));guide.classList.remove('v749-show');active=null}
-function lookup(el){const eng=window.GemEngine;if(!eng?.players?.[0])return null;const o=el.dataset.origin,i=Number(el.dataset.i),t=Number(el.dataset.t);return o==='market'?eng.market[t]?.[i]:o==='reserved'?eng.reserved[i]:null}
+function lookup(el){const eng=window.GemEngine;if(!eng?.players?.[eng.localIndex??0])return null;const o=el.dataset.origin,i=Number(el.dataset.i),t=Number(el.dataset.t);return o==='market'?eng.market[t]?.[i]:o==='reserved'?eng.reserved[i]:null}
 function update(){
  if(!active||!active.isConnected||document.body.classList.contains('v749-guide-off')){clear();return}
- const eng=window.GemEngine,c=lookup(active),p=eng?.players?.[0];if(!c||!p){clear();return}
+ const eng=window.GemEngine,c=lookup(active),me=eng?.localIndex??0,p=eng?.players?.[me];if(!c||!p){clear();return}
  document.querySelectorAll('.v749-needed,.v749-short').forEach(el=>el.classList.remove('v749-needed','v749-short'));
  const due=c.cost.map((n,i)=>Math.max(0,n-(p.b[i]||0)));
  const missing=due.map((n,i)=>Math.max(0,n-(p.g[i]||0)));
  const short=missing.reduce((a,b)=>a+b,0),wild=p.g[5]||0;
  for(let i=0;i<5;i++){
    if(!due[i])continue;
-   const bank=document.querySelectorAll('#bank .token')[i],mine=document.querySelectorAll('#pTokens .token')[i],bonus=document.querySelectorAll('#pBonus .pip')[i];
+   const tokenSelector=me===1?'#aTokens .token':'#pTokens .token',bonusSelector=me===1?'#aBonus .pip':'#pBonus .pip';
+   const bank=document.querySelectorAll('#bank .token')[i],mine=document.querySelectorAll(tokenSelector)[i],bonus=document.querySelectorAll(bonusSelector)[i];
    if(bank)bank.classList.add(missing[i]?'v749-needed':'v749-short');
    if(mine)mine.classList.add(missing[i]?'v749-short':'v749-needed');
    if(bonus)bonus.classList.add('v749-needed');
  }
- const joker=document.querySelectorAll('#pTokens .token')[5];if(joker&&short>0&&wild>0)joker.classList.add('v749-needed');
+ const joker=document.querySelectorAll(me===1?'#aTokens .token':'#pTokens .token')[5];if(joker&&short>0&&wild>0)joker.classList.add('v749-needed');
  const shortage=Math.max(0,short-wild);
  guide.innerHTML='<strong>💎 '+c.name.replace(/[&<>"']/g,k=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[k]))+'</strong><span>Coût après bonus permanents :</span><div class="v749-line">'+due.map((n,i)=>n?'<span class="v749-chip"><i class="v749-dot" style="background:'+colors[i]+'"></i>'+names[i]+' '+n+' (jetons '+(p.g[i]||0)+')</span>':'').join('')+(due.every(n=>!n)?'<span class="v749-yes">Gratuit</span>':'')+'</div><div style="margin-top:7px" class="'+(shortage?'v749-no':'v749-yes')+'">'+(shortage?'Il manque '+shortage+' gemme'+(shortage>1?'s':'')+' après '+wild+' joker(s)':'✓ Recrutement possible')+'</div>';
  guide.classList.add('v749-show');
@@ -4407,7 +4408,7 @@ document.addEventListener('pointerout',e=>{if(active&&(e.target===active||active
 document.addEventListener('focusin',e=>{const card=e.target.closest?.('#market .card,#reserved .card');if(card){active=card;update();const r=card.getBoundingClientRect();move({clientX:r.right,clientY:r.top})}},true);
 document.addEventListener('focusout',e=>{if(active&&active===e.target)clear()},true);
 document.addEventListener('v749-preferences-changed',()=>{if(document.body.classList.contains('v749-guide-off'))clear();else if(active)update()});
-new MutationObserver(()=>{if(active)update()}).observe(document.getElementById('pTokens'),{childList:true});
+for(const id of ['pTokens','aTokens'])new MutationObserver(()=>{if(active)update()}).observe(document.getElementById(id),{childList:true});
 })();
 </script>
 
