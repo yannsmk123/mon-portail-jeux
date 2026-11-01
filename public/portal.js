@@ -133,9 +133,6 @@ function applyPortalSettings(){
  const p=portalConfig;
  byId('portalBrand').textContent=p.siteName||'MY GAME ARCADE';
  byId('portalSubtitle').textContent=p.subtitle||'LE PORTAIL DES JEUX MAISON';
- byId('portalHeroTitle').textContent=p.heroTitle||'Des jeux faits maison.';
- byId('portalHeroHighlight').textContent=p.heroHighlight||'Des parties sans frontières.';
- byId('portalIntro').textContent=p.intro||'Retrouve tous mes jeux au même endroit.';
  document.title=(p.siteName||'MY GAME ARCADE')+' — Portail de jeux';
 }
 function showDialog(id){byId(id).showModal()}
