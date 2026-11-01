@@ -2437,10 +2437,53 @@ html, body {
 #marvelAutoAssetsBar button:disabled{opacity:.55;cursor:wait}
 #marvelAutoAssetsBar .marvelAutoAssetsChoose:hover,#marvelAutoAssetsBar button:hover{background:#405744}
 </style>
+<style id="v852-fullscreen-tablet-style">
+/* Le mode plein écran et le verrouillage tactile n'affectent pas les mécaniques. */
+#v852FullscreenButton{white-space:nowrap;touch-action:manipulation;}
+body.v852-fullscreen-active .shell{padding-left:max(5px, env(safe-area-inset-left));padding-right:max(5px, env(safe-area-inset-right));}
+body.v852-fullscreen-active .top{margin-bottom:4px;}
+body.v852-fullscreen-active .gameBoard{height:calc(100dvh - 108px);}
+@media(max-width:900px){body.v852-fullscreen-active .gameBoard{height:auto;min-height:0;}}
+body.v848-touch-mode.v852-fullscreen-active .gameBoard{height:auto!important;}
+body.v852-tablet-lock{overscroll-behavior-x:none;-webkit-text-size-adjust:100%;}
+body.v852-tablet-lock .gameBoard{max-width:100%;overscroll-behavior-x:none;}
+/* Un doigt sur une zone du plateau fait défiler la page, sans déplacer la zone elle-même.
+   Seules les listes de cartes dotées de leur défilement propre peuvent coulisser latéralement. */
+body.v852-tablet-lock .gameBoard>.panel,
+body.v852-tablet-lock .gameBoard>.boardRight>.panel,
+body.v852-tablet-lock .gameBoard>.boardReserves{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}
+body.v852-tablet-lock .gameMarket .market,
+body.v852-tablet-lock .gameMarket .level,
+body.v852-tablet-lock .owned-rail,
+body.v852-tablet-lock .reserved-strip{touch-action:pan-x pan-y;}
+body.v852-tablet-lock button,
+body.v852-tablet-lock #bank .token{touch-action:manipulation;}
+/* Faux plein écran sur les appareils qui ne proposent pas l'API Fullscreen pour une page Web.
+   On conserve le défilement du plateau et le menu : le navigateur peut garder ses barres. */
+html.v852-fallback{scroll-behavior:auto;}
+body.v852-fallback{height:100dvh;overflow:hidden;}
+body.v852-fallback .shell{position:fixed;inset:0;z-index:1;width:100%;max-width:none;height:100dvh;overflow-x:clip;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+body.v852-fallback #gameNavigation{max-width:100%;}
+#v852FullscreenStatus{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
+#v852FullscreenExit{display:none;position:fixed;right:max(10px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top));z-index:10155;font:700 13px system-ui;border-radius:9px;padding:9px 11px;background:#182a27;color:#f7e5b2;border:1px solid #bd9d60;}
+body.nav-hidden.v852-fullscreen-active #v852FullscreenExit{display:block;}
+</style>
 <script id="marvel-auto-animations-init">
 (()=>{try{const css=localStorage.getItem('marvel_auto_animations_css_v1');if(css){const style=document.createElement('style');style.id='marvel-auto-animations';style.textContent=css;document.head.append(style);}}catch(e){console.warn('Animations automatiques :',e)}})();
 </script>
-</head><body><div class="shell"><div id="v769-collapsed-menu-bar"><button type="button" id="navToggle" aria-controls="gameNavigation" aria-expanded="true" title="Masquer ou afficher le menu">☰ Masquer le menu</button></div><header class="top" id="gameNavigation"><div class="actionbar"><button class="btn" id="settingsBtn" type="button" title="Personnaliser le jeu">⚙️ Paramètres</button><button class="btn" id="ultronSettingsBtn" type="button" title="Configurer le comportement d’Ultron">🤖 IA Ultron</button><div class="cards-menu-wrap" id="cardsMenuWrap"><button class="btn" type="button" id="cardsMenuBtn" aria-haspopup="true" aria-expanded="false" aria-controls="cardsMenuContents">🃏 Mes cartes ▾</button><div class="cards-menu-contents" id="cardsMenuContents" hidden><button class="btn" id="heroAlbumBtn" type="button">📚 Album des héros</button><button class="btn" id="assetsBtn" type="button">🖼️ Mes images</button><button class="btn" id="locationsLibraryBtn" type="button">🏙️ Mes lieux à conquérir</button><button class="btn" id="cardsStudioBtn" type="button">✏️ Créer / modifier une carte</button></div></div><button class="btn" id="rulesBtn">📖 Règles</button><button class="btn" id="undoTurnBtn" type="button" title="Annuler la dernière action validée (toi ou Ultron)" disabled>↶ Retour en arrière</button><button class="btn" id="resumeUltronBtn" type="button" title="Relancer le tour d’Ultron après une annulation" hidden>▶ Reprendre Ultron</button><button class="btn" id="newBtn">↻ Nouvelle partie</button></div></header><div id="message" class="banner" role="status"></div><div class="layout"><main><div class="heroarea"><section class="panel"><div class="head"><h2>🧑 Toi</h2><span class="chip" id="yourTurn"></span></div><div class="stats"><div><span class="score" id="pScore">0</span><span class="small"> points</span></div><span class="chip" id="pStats"></span></div><div class="small" style="margin:9px 0">Jetons en main</div><div id="pTokens" class="tokens"></div><div class="small" style="margin:10px 0 4px">Bonus permanents</div><div id="pBonus" class="power"></div></section><section class="panel"><div class="head"><h2>🤖 IA — Ultron</h2><span class="chip" id="aiTurn"></span></div><div class="stats"><div><span class="score" id="aScore">0</span><span class="small"> points</span></div><span class="chip" id="aStats"></span></div><div class="small" style="margin:9px 0">Jetons en main</div><div id="aTokens" class="tokens"></div><div class="small" style="margin:10px 0 4px">Bonus permanents</div><div id="aBonus" class="power"></div></section></div><section class="panel"><div class="head"><h2>💎 Réserve de gemmes</h2><span class="small">3 couleurs différentes ou 2 identiques (pile ≥ 4)</span></div><div id="bank" class="tokens"></div><div class="actionbar reserve-actions" style="margin-top:28px"><button id="takeBtn" class="btn primary">Prendre les gemmes</button><button id="clearBtn" class="btn">Annuler sélection</button><span class="small" id="selectionText"></span></div></section><section class="panel"><div class="head"><h2>🃏 Personnages disponibles</h2><span class="small">Glisse une carte vers RECRUTER ou RÉSERVER</span></div><div class="market" id="market"></div></section><section class="panel"><div class="head"><h2>🛡️ Tes cartes réservées</h2><span class="chip" id="reservedCount">0 / 3</span></div><div class="reserveGrid" id="reserved"></div></section></main><aside class="side"><section class="panel"><h2>🎯 Objectif : le Gant</h2><p class="small">Pour déclencher la fin : 16 points, 5 bonus de couleurs différentes et une gemme verte du Temps.</p><div id="goal" class="info"></div></section><section class="panel"><h2>🌆 Lieux à conquérir</h2><p class="small">Bonus requis pour débloquer le lieu. Conquérir coûte une action complète (+3 points).</p><div id="locations"></div></section><section class="panel"><h2>🔰 Avengers</h2><p class="small">La tuile vaut +3 points au joueur ayant au moins 3 symboles et le plus grand total.</p><div id="avengersInfo" class="info"></div></section><section class="panel"><h2>📜 Journal</h2><div id="log" class="log" aria-live="polite"></div></section><section class="panel"><h2>💾 Jeu local</h2><p class="small">Aucune connexion ni compte nécessaires. La partie se sauvegarde automatiquement dans ce navigateur quand c’est possible.</p><button class="btn" id="resetSave">Effacer la sauvegarde</button></section></aside></div><div class="foot">Prototype non officiel à usage personnel, sans affiliation avec Marvel, Splendor ni leurs éditeurs. Illustrations représentées par des cartes graphiques originales.</div></div>
+
+<style id="v853-settings-shortcuts-in-nav">
+/* Onglets + six accès rapides sur la même barre, avec retour à la ligne sur tablette. */
+#gameSettings .v853-settings-nav{display:flex;align-items:stretch;align-content:start;flex-wrap:wrap;flex:none;gap:5px;max-height:145px;overflow-x:hidden;overflow-y:auto;scrollbar-width:thin;padding:2px 0 5px;border-bottom:1px solid #ffffff2d;}
+#gameSettings .v853-settings-nav .v790-tab-bar{display:contents;}
+#gameSettings .v853-shortcut-bar{display:contents;}
+#gameSettings .v853-shortcut-bar .v853-shortcut{color:#ffe6b8;border-color:#9c8050;background:#3b3327;}
+#gameSettings .v853-shortcut-bar .v853-shortcut:hover{background:#554832;}
+#gameSettings .v853-settings-nav .v790-tab{font-size:11.5px;padding:7px 9px;min-height:35px;}
+@media(max-width:1000px){#gameSettings{width:96vw!important;max-width:96vw!important;height:90dvh!important;max-height:90dvh!important;}#gameSettings .v853-settings-nav{max-height:185px;}}
+@media(max-width:580px){#gameSettings .v853-settings-nav .v790-tab{font-size:11px;padding:7px 8px;}#gameSettings .v853-settings-nav{max-height:195px;}}
+</style>
+</head><body><div class="shell"><div id="v769-collapsed-menu-bar"><button type="button" id="navToggle" aria-controls="gameNavigation" aria-expanded="true" title="Masquer ou afficher le menu">☰ Masquer le menu</button></div><header class="top" id="gameNavigation"><div class="actionbar"><button class="btn" id="v852FullscreenButton" type="button" title="Agrandir le jeu en plein écran" aria-pressed="false">⛶ Plein écran</button><button class="btn" id="settingsBtn" type="button" title="Personnaliser le jeu">⚙️ Paramètres</button><button class="btn" id="ultronSettingsBtn" type="button" title="Configurer le comportement d’Ultron">🤖 IA Ultron</button><div class="cards-menu-wrap" id="cardsMenuWrap"><button class="btn" type="button" id="cardsMenuBtn" aria-haspopup="true" aria-expanded="false" aria-controls="cardsMenuContents">🃏 Mes cartes ▾</button><div class="cards-menu-contents" id="cardsMenuContents" hidden><button class="btn" id="heroAlbumBtn" type="button">📚 Album des héros</button><button class="btn" id="assetsBtn" type="button">🖼️ Mes images</button><button class="btn" id="locationsLibraryBtn" type="button">🏙️ Mes lieux à conquérir</button><button class="btn" id="cardsStudioBtn" type="button">✏️ Créer / modifier une carte</button></div></div><button class="btn" id="rulesBtn">📖 Règles</button><button class="btn" id="undoTurnBtn" type="button" title="Annuler la dernière action validée (toi ou Ultron)" disabled>↶ Retour en arrière</button><button class="btn" id="resumeUltronBtn" type="button" title="Relancer le tour d’Ultron après une annulation" hidden>▶ Reprendre Ultron</button><button class="btn" id="newBtn">↻ Nouvelle partie</button></div></header><div id="message" class="banner" role="status"></div><div class="layout"><main><div class="heroarea"><section class="panel"><div class="head"><h2>🧑 Toi</h2><span class="chip" id="yourTurn"></span></div><div class="stats"><div><span class="score" id="pScore">0</span><span class="small"> points</span></div><span class="chip" id="pStats"></span></div><div class="small" style="margin:9px 0">Jetons en main</div><div id="pTokens" class="tokens"></div><div class="small" style="margin:10px 0 4px">Bonus permanents</div><div id="pBonus" class="power"></div></section><section class="panel"><div class="head"><h2>🤖 IA — Ultron</h2><span class="chip" id="aiTurn"></span></div><div class="stats"><div><span class="score" id="aScore">0</span><span class="small"> points</span></div><span class="chip" id="aStats"></span></div><div class="small" style="margin:9px 0">Jetons en main</div><div id="aTokens" class="tokens"></div><div class="small" style="margin:10px 0 4px">Bonus permanents</div><div id="aBonus" class="power"></div></section></div><section class="panel"><div class="head"><h2>💎 Réserve de gemmes</h2><span class="small">3 couleurs différentes ou 2 identiques (pile ≥ 4)</span></div><div id="bank" class="tokens"></div><div class="actionbar reserve-actions" style="margin-top:28px"><button id="takeBtn" class="btn primary">Prendre les gemmes</button><button id="clearBtn" class="btn">Annuler sélection</button><span class="small" id="selectionText"></span></div></section><section class="panel"><div class="head"><h2>🃏 Personnages disponibles</h2><span class="small">Glisse une carte vers RECRUTER ou RÉSERVER</span></div><div class="market" id="market"></div></section><section class="panel"><div class="head"><h2>🛡️ Tes cartes réservées</h2><span class="chip" id="reservedCount">0 / 3</span></div><div class="reserveGrid" id="reserved"></div></section></main><aside class="side"><section class="panel"><h2>🎯 Objectif : le Gant</h2><p class="small">Pour déclencher la fin : 16 points, 5 bonus de couleurs différentes et une gemme verte du Temps.</p><div id="goal" class="info"></div></section><section class="panel"><h2>🌆 Lieux à conquérir</h2><p class="small">Bonus requis pour débloquer le lieu. Conquérir coûte une action complète (+3 points).</p><div id="locations"></div></section><section class="panel"><h2>🔰 Avengers</h2><p class="small">La tuile vaut +3 points au joueur ayant au moins 3 symboles et le plus grand total.</p><div id="avengersInfo" class="info"></div></section><section class="panel"><h2>📜 Journal</h2><div id="log" class="log" aria-live="polite"></div></section><section class="panel"><h2>💾 Jeu local</h2><p class="small">Aucune connexion ni compte nécessaires. La partie se sauvegarde automatiquement dans ce navigateur quand c’est possible.</p><button class="btn" id="resetSave">Effacer la sauvegarde</button></section></aside></div><div class="foot">Prototype non officiel à usage personnel, sans affiliation avec Marvel, Splendor ni leurs éditeurs. Illustrations représentées par des cartes graphiques originales.</div></div>
 <div id="modal" class="modal"><div class="modalBox"><h2 id="modalTitle"></h2><div id="modalBody"></div><div id="modalButtons" class="actionbar"></div></div></div>
 <div class="configBackdrop" id="assetDialog"><div class="config" role="dialog" aria-modal="true" aria-label="Bibliothèque d'images"><div class="configHeader"><div><h2>🖼️ Bibliothèque de cartes</h2><div class="notice">Importe ton dossier d'illustrations. Les images restent sur ton ordinateur (IndexedDB du navigateur).</div></div><button class="btn" id="closeAssets">✕ Fermer</button></div><div class="rowActions"><label class="btn primary">📁 Importer un dossier<input id="folderFiles" type="file" accept="image/*" webkitdirectory multiple></label><label class="btn">🖼️ Importer des images<input id="singleFiles" type="file" accept="image/*" multiple></label><button class="btn" id="autoMatch">✨ Associer par nom</button><button class="btn" id="clearAssignments">Effacer les associations</button></div><div class="fileDrop" id="dropFiles">Glisse tes images ici ou choisis un dossier. Formats : PNG, JPG, WEBP, GIF.</div><p id="assetStatus" class="notice">Sélectionne une image ci-dessous, puis clique sur le nom du personnage à illustrer.</p><input type="search" id="assetSearch" placeholder="Rechercher une image ou un personnage…" style="width:100%"><div class="assetGrid" id="assetGrid"></div><h3>Associer l'image sélectionnée à une carte</h3><div class="notice">Les noms reconnus automatiquement sont associés dès l'import. Tu peux remplacer manuellement n'importe quelle association. Un personnage peut apparaître plusieurs fois dans le jeu.</div><div class="assignGrid" id="assignGrid"></div><h3 style="margin-top:22px">🛠️ Gérer les images associées</h3><p class="notice">Remplacer : sélectionne une autre image puis clique sur Remplacer. Retirer : revient à la carte sans illustration, sans supprimer le fichier du PC.</p><div class="associationRows" id="associationRows"></div></div></div>
 <div id="v3-fx" aria-hidden="true"></div><div id="v3-toast" role="status" aria-live="polite"></div>
@@ -3796,7 +3839,7 @@ function cancel(){let d=current;current=null;if(d?.ghost)d.ghost.remove();docume
 document.addEventListener('pointerdown',ev=>{
   const el=ev.target.closest?.('#market [data-drag-card],#reserved [data-drag-card]');
   // Mode tactile : un toucher ouvre la fiche et ses actions. La souris garde le drag classique.
-  if(document.body.classList.contains('v848-touch-mode') && ev.pointerType!=='mouse')return;
+  if((document.body.classList.contains('v848-touch-mode')||document.body.classList.contains('v852-tablet-lock')) && ev.pointerType!=='mouse')return;
   if(!el||ev.button!==0||!engine()||engine().turn!==engine().localIndex||engine().ended||(window.MarvelNetwork?.connected?.()&&!window.MarvelNetwork.canAct()))return;
   const item=dataFrom(el);if(!item.card)return;
   // Empêche le glissement natif de l'image ou la sélection de texte de voler le geste.
@@ -4069,11 +4112,16 @@ newGroups.forEach(group=>settingsPanel.insertBefore(group,backupGroup));
 const originalGroups=Array.from(settingsPanel.querySelectorAll('fieldset.settings-group')).filter(group=>!group.classList.contains('v790-extra'));
 const tabBar=document.createElement('div');tabBar.className='v790-tab-bar';tabBar.setAttribute('role','tablist');tabBar.setAttribute('aria-label','Catégories des paramètres');
 const tabContent=document.createElement('div');tabContent.className='v790-tab-content';
-settingsPanel.querySelector('.settings-head').after(tabBar,tabContent);
+// Les raccourcis sont des actions, pas des onglets : ils sont côte à côte avec
+// les onglets, juste après « Données ». Chaque bouton réutilise son écouteur.
+const settingsNav=document.createElement('div');settingsNav.className='v853-settings-nav';
+const quickActionBar=document.createElement('div');quickActionBar.className='v853-shortcut-bar';quickActionBar.setAttribute('role','group');quickActionBar.setAttribute('aria-label','Accès rapides');
+settingsNav.append(tabBar,quickActionBar);
+settingsPanel.querySelector('.settings-head').after(settingsNav,tabContent);
 const groups=[
- ['appearance','🎨 Apparence',[originalGroups[0],originalGroups[3],newGroups[0],newGroups[1]]],
+ ['appearance','🎨 Apparence',[originalGroups[0],originalGroups[3],originalGroups[4],newGroups[0],newGroups[1]]],
  ['effects','🔊 Son et effets',[originalGroups[1],newGroups[2]]],
- ['helpers','💎 Aides',[originalGroups[2],originalGroups[4],newGroups[3]]],
+ ['helpers','💎 Aides',[originalGroups[2],newGroups[3]]],
  ['board','🧩 Plateau',[newGroups[4]]],
  ['data','💾 Données',[backupGroup]]
 ];
@@ -4085,6 +4133,24 @@ for(const [key,label,fields] of groups){
  fields.filter(Boolean).forEach(el=>pane.append(el));tabBar.append(b);tabContent.append(pane);tabs.set(key,{b,pane});
  b.addEventListener('click',()=>activateTab(key));
 }
+// Réutiliser les six boutons existants (les mêmes fonctions qu'auparavant).
+// Sans les dupliquer, leurs événements continuent de fonctionner en solo/en ligne.
+const shortcuts=[
+ ['settingsOpenUltron','🤖 IA Ultron'],
+ ['settingsOpenRules','📖 Règles'],
+ ['settingsHeroAlbum','📚 Album des héros'],
+ ['settingsAssets','🖼️ Mes images'],
+ ['settingsLocationsLibrary','🏙️ Mes lieux'],
+ ['settingsCardsStudio','✏️ Créer / modifier une carte']
+];
+for(const [id,caption] of shortcuts){
+ const btn=$(id);
+ if(!btn)continue;
+ btn.textContent=caption;
+ btn.classList.add('v790-tab','v853-shortcut');
+ quickActionBar.append(btn);
+}
+$('settingsQuickActions')?.remove();
 function activateTab(key){
  activeSettingsTab=key;
  for(const [name,item] of tabs){const current=name===key;item.b.setAttribute('aria-selected',String(current));item.b.tabIndex=current?0:-1;item.pane.hidden=!current;}
@@ -5776,7 +5842,12 @@ const root=document.body;
 const pane=document.getElementById('settingsPane-appearance');
 if(!pane)return;
 let enabled=false;
-try{enabled=localStorage.getItem(KEY)==='on';}catch(_e){}
+try{
+ const saved=localStorage.getItem(KEY);
+ const coarse=window.matchMedia?.('(pointer: coarse)')?.matches||false;
+ const smallest=Math.min(screen.width||innerWidth,screen.height||innerHeight);
+ enabled=saved==='on'||(saved===null&&coarse&&smallest>=600);
+}catch(_e){}
 const group=document.createElement('fieldset');
 group.className='settings-group';group.id='v848TouchModeGroup';
 group.innerHTML=`<legend>👆 Mode tactile — iPad / tablette</legend>
@@ -5805,7 +5876,7 @@ setMode(enabled);
 // Tap-to-inspect : utilise l'inspecteur déjà présent, avec ses actions réelles et ses coûts.
 // Nous n'ajoutons aucune deuxième logique d'achat/réservation.
 document.addEventListener('click',e=>{
- if(!enabled)return;
+ if(!enabled&&!document.body.classList.contains('v852-tablet-lock'))return;
  const card=e.target.closest?.('#market [data-drag-card],#reserved [data-drag-card],.owned-rail .card,.reserved-strip .card');
  if(!card)return;
  // Ne bloque pas les boutons de l'inspecteur, seulement les cartes du plateau.
@@ -6331,5 +6402,71 @@ if(readSession())connect('resume',true);
  verify();
 })();
 
+</script>
+<script id="v852-fullscreen-tablet-script">
+(()=>{'use strict';
+const fullscreenButton=document.getElementById('v852FullscreenButton');
+if(!fullscreenButton)return;
+const exitButton=document.createElement('button');
+exitButton.id='v852FullscreenExit';exitButton.type='button';exitButton.textContent='⛶ Quitter le plein écran';
+exitButton.setAttribute('aria-label','Quitter le plein écran');
+const status=document.createElement('span');status.id='v852FullscreenStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
+document.body.append(exitButton,status);
+let fallback=false;
+const nativeOn=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
+const active=()=>nativeOn()||fallback;
+function sync(){
+ const on=active();
+ document.body.classList.toggle('v852-fullscreen-active',on);
+ document.body.classList.toggle('v852-fallback',fallback);
+ document.documentElement.classList.toggle('v852-fallback',fallback);
+ fullscreenButton.setAttribute('aria-pressed',String(on));
+ fullscreenButton.textContent=on?'⛶ Quitter le plein écran':'⛶ Plein écran';
+ fullscreenButton.title=on?'Revenir à l’affichage normal':'Agrandir le jeu en plein écran';
+ status.textContent=on?(fallback?'Affichage agrandi activé. Le navigateur peut garder sa barre de navigation.':'Plein écran activé.'):'Plein écran désactivé.';
+}
+function setFallback(on){fallback=!!on;sync();}
+async function toggle(){
+ if(nativeOn()){
+  const exit=document.exitFullscreen||document.webkitExitFullscreen;
+  try{if(exit)await exit.call(document);}catch(error){console.warn('Sortie du plein écran indisponible',error);}
+  sync();return;
+ }
+ if(fallback){setFallback(false);return;}
+ const el=document.documentElement;
+ const request=el.requestFullscreen||el.webkitRequestFullscreen;
+ if(!request){setFallback(true);return;}
+ try{
+  const result=el.requestFullscreen?request.call(el,{navigationUI:'hide'}):request.call(el);
+  if(result&&typeof result.then==='function')await result;
+  // Sur certains moteurs WebKit, l’évènement arrive après le retour de la méthode.
+  sync();
+  if(!nativeOn())window.setTimeout(()=>{if(!nativeOn()&&!fallback)setFallback(true);},350);
+ }catch(error){
+  console.info('Plein écran natif refusé, affichage agrandi activé :',error);
+  setFallback(true);
+ }
+}
+fullscreenButton.addEventListener('click',toggle);
+exitButton.addEventListener('click',toggle);
+document.addEventListener('fullscreenchange',sync);
+document.addEventListener('webkitfullscreenchange',sync);
+document.addEventListener('keydown',event=>{
+ if(event.key==='Escape'&&fallback){setFallback(false);}
+});
+// Tablette : les panneaux restent ancrés à la grille ; seuls les défilements
+// indispensables (page, rangées de cartes) sont permis. Le drag tactile des cartes
+// est coupé dans v76-drag ; le mode tactile offre des actions par appui.
+function updateTabletLock(){
+ const coarse=window.matchMedia?.('(pointer: coarse)')?.matches||false;
+ const shortest=Math.min(screen.width||innerWidth,screen.height||innerHeight);
+ const isTablet=(coarse||(navigator.maxTouchPoints||0)>1)&&shortest>=600;
+ document.body.classList.toggle('v852-tablet-lock',isTablet);
+}
+window.addEventListener('resize',updateTabletLock,{passive:true});
+window.addEventListener('orientationchange',updateTabletLock,{passive:true});
+window.addEventListener('pageshow',sync);
+updateTabletLock();sync();
+})();
 </script>
 </body></html>
